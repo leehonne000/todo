@@ -73,6 +73,32 @@
   .subject-bar .sb-text { color: rgba(255, 255, 255, 0.55); }
   .subject-bar .sb-text.set { color: #fff; font-weight: 500; }
   .subject-bar .chev { font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+
+  .type-toggle {
+    display: flex;
+    gap: 4px;
+    height: 46px;
+    padding: 4px;
+    border-radius: 14px;
+    margin-top: 3px;
+  }
+  .type-seg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.78);
+    cursor: pointer;
+  }
+  .type-seg.on {
+    background: #FAC775;
+    color: #241c08;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(250, 199, 117, 0.3);
+  }
   .subject-options {
     display: none;
     margin-top: 3px;
@@ -280,8 +306,14 @@
       <div class="opt" data-s="计算机学科专业基础综合(408)"><div class="dot"></div><div class="name">计算机学科专业基础综合(408)</div></div>
     </div>
 
+    <div class="sec-label">类型 · 二选一</div>
+    <div class="type-toggle glass" id="typeToggle">
+      <div class="type-seg on" data-t="note">note</div>
+      <div class="type-seg" data-t="错题">错题</div>
+    </div>
+
     <div class="sec-label">内容</div>
-    <textarea id="text" placeholder="记下今天的内容、结论或错题……"></textarea>
+    <textarea id="text" placeholder="记下今天的内容、结论或错题……（可空，纯图片也行）"></textarea>
 
     <div class="sec-label">图片</div>
     <div class="img-row" id="imgRow">
@@ -306,7 +338,8 @@
 
 <p class="hint">
   Demo · 科目编辑界面 —— 点「科目」选项卡展开四选一、选中后自动折叠并显示科目名；
-  编辑文字、点「＋」插图（电脑上传 / 手机拍照相册）、自定义标签（点「＋标签」输入，回车添加），完成后回到学习总结页
+  「类型」二选一（note / 错题，默认 note）；编辑文字（可空）、点「＋」插图（上限 10 张，电脑上传 / 手机拍照相册）、
+  自定义标签（点「＋标签」输入，回车添加），完成后回到学习总结页
 </p>
 
 <script>
@@ -342,12 +375,22 @@
     setOpen(false);
   });
 
+  var typeToggle = document.getElementById('typeToggle');
+  var currentType = 'note';
+  typeToggle.addEventListener('click', function (e) {
+    var seg = e.target.closest('.type-seg');
+    if (!seg) return;
+    this.querySelectorAll('.type-seg').forEach(function (s) { s.classList.remove('on'); });
+    seg.classList.add('on');
+    currentType = seg.getAttribute('data-t');
+  });
+
   var imgInput = document.getElementById('imgInput');
   document.getElementById('addImg').addEventListener('click', function () { imgInput.click(); });
 
   imgInput.addEventListener('change', function () {
     Array.prototype.forEach.call(imgInput.files, function (f) {
-      if (images.length >= 6) return;
+      if (images.length >= 10) return;
       images.push({ url: URL.createObjectURL(f) });
     });
     imgInput.value = '';
@@ -417,7 +460,7 @@
     var tagList = Array.prototype.map.call(document.querySelectorAll('.tag'), function (t) {
       return t.textContent.replace('×', '').trim();
     });
-    showToast('已保存 ·「' + subject + '」· 图片 ' + images.length + ' 张' +
+    showToast('已保存 ·「' + subject + '」· ' + currentType + ' · 图片 ' + images.length + ' 张' +
       (tagList.length ? ' · 标签 ' + tagList.join('、') : '') + '，返回学习总结');
   });
 </script>
