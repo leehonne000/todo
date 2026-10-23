@@ -1,0 +1,9 @@
+# 个人工作区数据（含私人记忆，不上传）
+.workbuddy/
+
+# Python
+__pycache__/
+*.pyc
+
+# 废弃素材
+pics/_rejected/
