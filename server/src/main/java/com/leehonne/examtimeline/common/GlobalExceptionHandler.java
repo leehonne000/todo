@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,6 +36,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleNoResource(NoResourceFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail(3002, "接口不存在"));
+    }
+
+    /** GET 访问 POST 接口等 → 405 */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResponse.fail(1002, "请求方法不支持（本接口要求 " + String.join("/", e.getSupportedMethods()) + "）"));
     }
 
     @ExceptionHandler(Exception.class)

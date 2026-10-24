@@ -1,0 +1,183 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "考研时间线 · 认证接口",
+    "description": "注册登录四接口（本地开发验证用）。统一响应 {code, message, data}，code=0 为成功。",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://localhost:8080" }],
+  "paths": {
+    "/api/auth/send-code": {
+      "post": {
+        "summary": "发送验证码",
+        "description": "purpose: 1=注册激活 2=找回密码。60 秒内同邮箱同用途只能发一次；10 分钟过期。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendCodeRequest" },
+              "example": { "email": "3537572282@qq.com", "purpose": 1 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "统一响应",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "成功": { "value": { "code": 0, "message": "ok", "data": null } },
+                  "已注册": { "value": { "code": 3001, "message": "该邮箱已注册，请直接登录", "data": null } },
+                  "发送太频繁": { "value": { "code": 3003, "message": "发送太频繁，请 60 秒后再试", "data": null } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "注册（验码建号）",
+        "description": "校验激活码 → 建账号（已激活）→ 录科目组合 → 返回 JWT。密码 6~32 位，科目 2~5 门。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" },
+              "example": {
+                "email": "3537572282@qq.com",
+                "password": "Test-12345",
+                "examYear": 2027,
+                "code": "123456",
+                "subjects": ["政治", "英语一", "数学三", "计算机学科专业基础综合(408)"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "统一响应",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "成功": {
+                    "value": {
+                      "code": 0,
+                      "message": "ok",
+                      "data": { "token": "eyJhbGciOiJIUzM4NCJ9...", "userId": 1, "email": "3537572282@qq.com" }
+                    }
+                  },
+                  "验证码无效": { "value": { "code": 1001, "message": "验证码无效或已过期，请重新获取", "data": null } },
+                  "已注册": { "value": { "code": 3001, "message": "该邮箱已注册，请直接登录", "data": null } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "登录",
+        "description": "邮箱 + 密码 → JWT（7 天有效）。密码错/未注册都返回 2001（不泄露哪个错）。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" },
+              "example": { "email": "3537572282@qq.com", "password": "Test-12345" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "统一响应",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "成功": {
+                    "value": {
+                      "code": 0,
+                      "message": "ok",
+                      "data": { "token": "eyJhbGciOiJIUzM4NCJ9...", "userId": 1, "email": "3537572282@qq.com" }
+                    }
+                  },
+                  "密码错误": { "value": { "code": 2001, "message": "邮箱或密码错误", "data": null } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "summary": "找回密码",
+        "description": "邮箱 + purpose=2 的验证码 + 新密码。改完旧密码失效。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" },
+              "example": { "email": "3537572282@qq.com", "code": "123456", "newPassword": "Test-67890" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "统一响应",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "成功": { "value": { "code": 0, "message": "ok", "data": null } },
+                  "邮箱未注册": { "value": { "code": 3002, "message": "该邮箱未注册", "data": null } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SendCodeRequest": {
+        "type": "object",
+        "required": ["email", "purpose"],
+        "properties": {
+          "email": { "type": "string", "description": "邮箱" },
+          "purpose": { "type": "integer", "description": "1=注册激活 2=找回密码" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password", "examYear", "subjects", "code"],
+        "properties": {
+          "email": { "type": "string" },
+          "password": { "type": "string", "description": "6~32 位" },
+          "examYear": { "type": "integer", "description": "考研届数，如 2027" },
+          "subjects": { "type": "array", "items": { "type": "string" }, "description": "科目 2~5 门" },
+          "code": { "type": "string", "description": "6 位验证码" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["email", "code", "newPassword"],
+        "properties": {
+          "email": { "type": "string" },
+          "code": { "type": "string" },
+          "newPassword": { "type": "string", "description": "6~32 位" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录接口验证台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #F4F2EC;
+    color: #2C2C2A;
+    padding: 24px 16px 60px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #5F5E5A; margin-bottom: 18px; }
+  .card {
+    background: #fff;
+    border: 1px solid #D3D1C7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  label { display: block; font-size: 12px; color: #5F5E5A; margin: 8px 0 3px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #B4B2A9;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #FBFAF7;
+  }
+  input:focus, textarea:focus { outline: 2px solid #FAC775; border-color: #FAC775; }
+  textarea { resize: vertical; min-height: 52px; }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+  button {
+    margin-top: 12px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 999px;
+    background: #FAC775;
+    color: #241c08;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { filter: brightness(0.97); }
+  button:active { transform: scale(0.97); }
+  button.ghost { background: #EFEDE6; color: #444441; }
+  .out {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #F7F5EF;
+    border: 1px solid #E2DFD5;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 44px;
+    color: #444441;
+  }
+  .out .ok { color: #3B6D11; font-weight: 600; }
+  .out .err { color: #A32D2D; font-weight: 600; }
+  .token-box {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #EAF3DE;
+    border: 1px solid #C0DD97;
+    border-radius: 8px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    word-break: break-all;
+    display: none;
+  }
+  .tip { font-size: 12px; color: #888780; margin-top: 8px; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; background: #EFEDE6; color: #5F5E5A; margin-left: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>登录接口验证台</h1>
+  <p class="sub">按顺序点按钮即可验证后端登录功能。每步的响应会显示在框里，<b>code=0 即成功</b>。</p>
+
+  <div class="card">
+    <h2>0. 服务地址</h2>
+    <label>后端地址（默认本地 8080）</label>
+    <input id="base" value="http://localhost:8080">
+    <button class="ghost" onclick="ping()">连通性检查</button>
+    <div class="out" id="out-ping">（点「连通性检查」看后端是否活着）</div>
+    <p class="tip">预期：返回 JSON（如"未登录…"）＝ 服务正常；报错连不上 ＝ 服务没启动。</p>
+  </div>
+
+  <div class="card">
+    <h2>1. 发送验证码 <span class="badge">真发邮件</span></h2>
+    <label>你的 QQ 邮箱</label>
+    <input id="email1" value="3537572282@qq.com">
+    <label>用途</label>
+    <select id="purpose">
+      <option value="1">1 = 注册激活</option>
+      <option value="2">2 = 找回密码</option>
+    </select>
+    <button onclick="sendCode()">发送验证码</button>
+    <div class="out" id="out-code">（还没发）</div>
+    <p class="tip">预期：code=0 且 <b>1~2 分钟内 QQ 邮箱收到「考研时间线」邮件</b>（收不到看垃圾箱）。60 秒内不能重复发。</p>
+  </div>
+
+  <div class="card">
+    <h2>2. 注册 <span class="badge">需验证码</span></h2>
+    <div class="row">
+      <div><label>邮箱</label><input id="email2" value="3537572282@qq.com"></div>
+      <div><label>密码（6~32 位）</label><input id="pwd2" value="Test-12345"></div>
+    </div>
+    <div class="row">
+      <div><label>考研届数</label><input id="year" value="2027"></div>
+      <div><label>邮箱里的 6 位验证码</label><input id="code2" placeholder="如 123456"></div>
+    </div>
+    <label>科目（逗号分隔，2~5 门）</label>
+    <input id="subjects" value="政治,英语一,数学三,计算机学科专业基础综合(408)">
+    <button onclick="register()">注册</button>
+    <div class="out" id="out-reg">（还没试）</div>
+    <div class="token-box" id="token2"></div>
+    <p class="tip">预期：code=0 ＋ 返回 token（自动保存到下方登录态）。重复注册会被拒（code=3001）。</p>
+  </div>
+
+  <div class="card">
+    <h2>3. 登录</h2>
+    <div class="row">
+      <div><label>邮箱</label><input id="email3" value="3537572282@qq.com"></div>
+      <div><label>密码</label><input id="pwd3" value="Test-12345"></div>
+    </div>
+    <button onclick="login()">登录</button>
+    <button class="ghost" onclick="loginWrong()">试试错误密码</button>
+    <div class="out" id="out-login">（还没试）</div>
+    <div class="token-box" id="token3"></div>
+    <p class="tip">预期：正确密码返回 token；错误密码 code=2001。</p>
+  </div>
+
+  <div class="card">
+    <h2>4. 门卫验票（JWT）</h2>
+    <button class="ghost" onclick="probe(false)">不带票据访问受保护接口</button>
+    <button class="ghost" onclick="probe(true)">带着票据访问</button>
+    <div class="out" id="out-probe">（还没试）</div>
+    <p class="tip">预期：不带票＝"未登录"提示；带票＝过了门卫（接口不存在则报"接口不存在"，也算过）。</p>
+  </div>
+
+  <div class="card">
+    <h2>5. 找回密码 <span class="badge">真发邮件</span></h2>
+    <div class="row">
+      <div><label>邮箱</label><input id="email5" value="3537572282@qq.com"></div>
+      <div><label>验证码（purpose=2 的）</label><input id="code5" placeholder="先在第 1 步选「找回密码」发码"></div>
+    </div>
+    <label>新密码</label>
+    <input id="newpwd" value="Test-67890">
+    <button onclick="resetPwd()">修改密码</button>
+    <div class="out" id="out-reset">（还没试）</div>
+    <p class="tip">预期：code=0 后，用<b>新密码</b>回第 3 步登录成功、旧密码失败。</p>
+  </div>
+</div>
+
+<script>
+  var savedToken = null;
+
+  function base() {
+    var v = document.getElementById('base').value.trim();
+    return v.replace(/\/+$/, '');
+  }
+
+  function show(id, status, text) {
+    var el = document.getElementById(id);
+    var cls = (status >= 200 && status < 300) || text.indexOf('"code":0') >= 0 ? 'ok' : 'err';
+    el.innerHTML = '<span class="' + cls + '">HTTP ' + status + '</span>\n' + escapeHtml(text);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function call(path, method, body, outId, done) {
+    fetch(base() + path, {
+      method: method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        show(outId, res.status, t || (res.ok ? '（无正文）' : '（空响应）'));
+        try { done && done(JSON.parse(t)); } catch (e) { done && done(null); }
+      });
+    }).catch(function (e) {
+      show(outId, 0, '请求失败：' + e.message + '\n（服务没启动？地址对吗？）');
+    });
+  }
+
+  function saveToken(id, data) {
+    if (data && data.data && data.data.token) {
+      savedToken = data.data.token;
+      var el = document.getElementById(id);
+      el.style.display = 'block';
+      el.textContent = '已保存登录票据（token）：' + savedToken.slice(0, 40) + '…';
+    }
+  }
+
+  function ping() {
+    call('/', 'GET', null, 'out-ping');
+  }
+
+  function sendCode() {
+    call('/api/auth/send-code', 'POST',
+      { email: document.getElementById('email1').value.trim(), purpose: parseInt(document.getElementById('purpose').value, 10) },
+      'out-code');
+  }
+
+  function register() {
+    var subjects = document.getElementById('subjects').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    call('/api/auth/register', 'POST', {
+      email: document.getElementById('email2').value.trim(),
+      password: document.getElementById('pwd2').value,
+      examYear: parseInt(document.getElementById('year').value, 10),
+      code: document.getElementById('code2').value.trim(),
+      subjects: subjects
+    }, 'out-reg', function (d) { saveToken('token2', d); });
+  }
+
+  function login() {
+    call('/api/auth/login', 'POST', {
+      email: document.getElementById('email3').value.trim(),
+      password: document.getElementById('pwd3').value
+    }, 'out-login', function (d) { saveToken('token3', d); });
+  }
+
+  function loginWrong() {
+    call('/api/auth/login', 'POST', {
+      email: document.getElementById('email3').value.trim(),
+      password: 'wrong-password'
+    }, 'out-login');
+  }
+
+  function probe(withToken) {
+    fetch(base() + '/api/subjects', {
+      method: 'GET',
+      headers: withToken && savedToken ? { 'Authorization': 'Bearer ' + savedToken } : {}
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        show('out-probe', res.status, (withToken ? '【带票据】' : '【不带票据】') + '\n' + (t || '（空响应）'));
+      });
+    }).catch(function (e) {
+      show('out-probe', 0, '请求失败：' + e.message);
+    });
+  }
+
+  function resetPwd() {
+    call('/api/auth/reset-password', 'POST', {
+      email: document.getElementById('email5').value.trim(),
+      code: document.getElementById('code5').value.trim(),
+      newPassword: document.getElementById('newpwd').value
+    }, 'out-reset');
+  }
+</script>
+</body>
+</html>
