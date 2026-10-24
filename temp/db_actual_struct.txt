@@ -1,0 +1,39 @@
+*************************** 1. row ***************************
+       Table: t_entry
+Create Table: CREATE TABLE `t_entry` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `session_id` bigint unsigned NOT NULL COMMENT '???? Learn??"????"?"????"?????§8?',
+  `user_id` bigint unsigned NOT NULL COMMENT '??????????? join?',
+  `subject_id` bigint unsigned NOT NULL COMMENT '????????????§4.3?',
+  `type` tinyint NOT NULL COMMENT '???1=note 2=???????????§4.3?',
+  `content` text COLLATE utf8mb4_general_ci COMMENT '????????????????????"????????"',
+  `round` tinyint NOT NULL DEFAULT '0' COMMENT '????????? 0~6',
+  `next_due_at` date DEFAULT NULL COMMENT '?????????=???+1????? 2/4/7/15/22 ???§6.1?',
+  `review_status` tinyint NOT NULL DEFAULT '0' COMMENT '?????0=??? 1=?????????',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '?????Done ???= ???????',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '???????????????',
+  PRIMARY KEY (`id`),
+  KEY `idx_entry_review` (`user_id`,`review_status`,`next_due_at`),
+  KEY `idx_entry_subject_type` (`user_id`,`subject_id`,`type`),
+  KEY `idx_entry_session` (`user_id`,`session_id`),
+  KEY `fk_entry_session` (`session_id`),
+  KEY `fk_entry_subject` (`subject_id`),
+  CONSTRAINT `fk_entry_session` FOREIGN KEY (`session_id`) REFERENCES `t_study_session` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_entry_subject` FOREIGN KEY (`subject_id`) REFERENCES `t_subject` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_entry_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='????note/???????'
+*************************** 1. row ***************************
+       Table: t_user
+Create Table: CREATE TABLE `t_user` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `email` varchar(64) COLLATE utf8mb4_general_ci NOT NULL COMMENT '???????/??/???????',
+  `password_hash` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'BCrypt ?????????',
+  `email_verified` tinyint NOT NULL DEFAULT '0' COMMENT '???????0=???(???) 1=???',
+  `phone` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '???????v1 ???????',
+  `exam_year` smallint NOT NULL COMMENT '?????? 2027?????/?????????',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '????',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '??????',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_email` (`email`),
+  UNIQUE KEY `uk_user_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='??'

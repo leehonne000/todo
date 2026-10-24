@@ -32,7 +32,7 @@ CREATE TABLE t_user (
 
 -- ------------------------------------------------------------
 -- 2. t_subject 科目组合
--- 业务绑定：注册时确定（§1.2）；科目编辑四选一（§4.3）；自由库/统计维度（§5.2/§5.3）
+-- 业务绑定：注册时确定（§1.2）；Learn 入口选科目四选一（§4.1，2026-10-24）；自由库/统计维度（§5.2/§5.3）
 -- ------------------------------------------------------------
 CREATE TABLE t_subject (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -48,24 +48,27 @@ CREATE TABLE t_subject (
 
 -- ------------------------------------------------------------
 -- 3. t_study_session 学习 session
--- 业务绑定：Learn 横屏计时（§4.1）；进度模块时长统计（§5.3）；今日学习卡打勾来源（§3）
--- 生命周期：开始计时建行 -> 长按结束补 ended_at/duration -> Done 写 entry
+-- 业务绑定：Learn 选科目+横屏计时（§4.1/§4.2）；进度模块时长统计（§5.3）；今日学习卡打勾来源（§3）
+-- 生命周期：选科目开始计时建行 -> 长按结束补 ended_at/duration -> Done 写 entry
+-- 2026-10-24：一次 session 只学一门科目，subject_id 随 session 落库（各科耗时精确统计）
 -- ------------------------------------------------------------
 CREATE TABLE t_study_session (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id         BIGINT UNSIGNED NOT NULL COMMENT '归属用户',
+  subject_id      BIGINT UNSIGNED NOT NULL COMMENT '本次学习科目（Learn 入口四选一，一次 session 一门）',
   started_at      DATETIME        NOT NULL COMMENT '计时开始时刻（横屏进入计时那一刻）',
   ended_at        DATETIME                 DEFAULT NULL COMMENT '长按结束时刻；异常中断可空',
   duration_seconds INT            NOT NULL DEFAULT 0 COMMENT '净学习秒数（排除暂停），一切时长统计的原始值',
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_session_user_started (user_id, started_at),
-  CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES t_user (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='学习 session';
+  KEY idx_session_user_started (user_id, started_at, subject_id),
+  CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES t_user (id) ON DELETE CASCADE,
+  CONSTRAINT fk_session_subject FOREIGN KEY (subject_id) REFERENCES t_subject (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='学习 session（单科目）';
 
 -- ------------------------------------------------------------
 -- 4. t_entry 记录项（★ 核心表）
--- 业务绑定：学习总结子条目（§4.2）+ 科目编辑内容（§4.3）；
+-- 业务绑定：学习总结子条目（§4.3）+ 记录编辑内容（§4.4）；
 --          自由库本体（§5.2）、艾宾浩斯队列（§6）、进度计数（§5.3）
 -- 复习状态机：round 0~6；next_due_at 到期 -> Review 卡消费；
 --            复习完成 round+1 顺延；round=6 -> review_status=1, next_due_at=NULL
@@ -74,8 +77,8 @@ CREATE TABLE t_entry (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   session_id    BIGINT UNSIGNED NOT NULL COMMENT '来自哪次 Learn：把"学了多久"和"学了什么"钉在一起（§8）',
   user_id       BIGINT UNSIGNED NOT NULL COMMENT '归属用户（冗余，查询免 join）',
-  subject_id    BIGINT UNSIGNED NOT NULL COMMENT '科目编辑四选一的落库值（§4.3）',
-  type          TINYINT         NOT NULL COMMENT '类型：1=note 2=错题（科目编辑二选一，§4.3）',
+  subject_id    BIGINT UNSIGNED NOT NULL COMMENT '所属科目：继承自 session.subject_id（Learn 入口选定，冗余免 join）',
+  type          TINYINT         NOT NULL COMMENT '类型：1=note 2=错题（总结页「添加note/添加错题」入口按钮，§4.3）',
   content       TEXT COMMENT '文字内容，可空（纯图片记录）；应用层校验"文字与图片至少一"',
   round         TINYINT         NOT NULL DEFAULT 0 COMMENT '艾宾浩斯已完成轮数 0~6',
   next_due_at   DATE                     DEFAULT NULL COMMENT '下一轮到期日：入库=记录日+1天，此后按 2/4/7/15/22 顺延（§6.1）',
@@ -93,7 +96,7 @@ CREATE TABLE t_entry (
 
 -- ------------------------------------------------------------
 -- 5. t_tag 标签（用户私有词表）
--- 业务绑定：科目编辑自定义标签（§4.3）；标签查询（产品文档 §3.1）；自由库筛选（§5.2）
+-- 业务绑定：记录编辑自定义标签（§4.4）；标签查询（产品文档 §3.1）；自由库筛选（§5.2）
 -- 独立词表：同名复用（UNIQUE），记录删除不影响标签
 -- ------------------------------------------------------------
 CREATE TABLE t_tag (
@@ -122,7 +125,7 @@ CREATE TABLE t_entry_tag (
 
 -- ------------------------------------------------------------
 -- 7. t_entry_image 图片元数据（本体在 MinIO 私有桶 exam-timeline）
--- 业务绑定：科目编辑图片插入（§4.3，上限 10 张/条）
+-- 业务绑定：记录编辑图片插入（§4.4，上限 10 张/条）
 -- ------------------------------------------------------------
 CREATE TABLE t_entry_image (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

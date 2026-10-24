@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习总结 Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #ECEAE4;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 12px;
+    gap: 14px;
+  }
+  .phone {
+    width: 375px;
+    height: 748px;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    color: #fff;
+    box-shadow: 0 18px 48px rgba(20, 24, 32, 0.28);
+    flex: none;
+  }
+  .bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('../pics/background/太空/Nebula__hlmflgnnmmojlnbmaokpfcjdkhkjbnok.png');
+    background-size: cover;
+    background-position: center;
+  }
+  .scrim { position: absolute; inset: 0; background: rgba(10, 10, 26, 0.42); }
+  .content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 18px 20px;
+    overflow-y: auto;
+  }
+  .content::-webkit-scrollbar { width: 0; }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .session-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 16px;
+  }
+  .session-line b { color: #FAC775; font-weight: 600; letter-spacing: 0.5px; }
+  .session-line .dur {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.75);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+  }
+
+  /* 三件套：添加note / 添加错题 */
+  .add-btn {
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    color: #fff;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.14s ease, background 0.14s ease;
+  }
+  .add-btn:active { transform: scale(0.97); background: rgba(250, 199, 117, 0.22); }
+  .add-btn .plus { font-size: 18px; font-weight: 300; }
+  .add-btn + .add-btn { margin-top: 8px; }
+
+  /* 子条目：紧贴按钮下方，小一点、像子标签 */
+  .entries { margin-left: 26px; width: 82%; }
+  .entry {
+    margin-top: 3px;
+    min-height: 44px;
+    border-radius: 0 0 12px 12px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-top: none;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.14s ease;
+  }
+  .entry:active { background: rgba(255, 255, 255, 0.18); }
+  .entry .e-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.92);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-all;
+  }
+  .entry .e-text.empty { color: rgba(255, 255, 255, 0.45); font-style: italic; }
+  .badge {
+    flex: none;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #fff;
+  }
+  .badge.note { background: rgba(255, 255, 255, 0.22); }
+  .badge.wrong { background: #FAC775; color: #241c08; font-weight: 600; }
+  .entry .chev { flex: none; font-size: 14px; color: rgba(255, 255, 255, 0.55); }
+
+  .empty-hint {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.5px;
+    line-height: 1.9;
+  }
+
+  .foot {
+    margin-top: auto;
+    padding-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .done {
+    min-width: 112px;
+    height: 50px;
+    padding: 0 26px;
+    border: none;
+    border-radius: 999px;
+    background: #FAC775;
+    color: #241c08;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(250, 199, 117, 0.35);
+    transition: transform 0.14s ease;
+  }
+  .done:active { transform: scale(0.95); }
+
+  .hint {
+    font-size: 12px;
+    color: #7a776f;
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="bg"></div>
+  <div class="scrim"></div>
+
+  <div class="content">
+    <div class="session-line">
+      <span>本次学习</span>
+      <b id="subjectName">科目</b>
+      <span class="dur" id="duration">00:00:00</span>
+    </div>
+
+    <div class="add-btn glass" onclick="addEntry('note')">
+      <span class="plus">＋</span><span>添加note</span>
+    </div>
+    <div class="add-btn glass" onclick="addEntry('wrong')">
+      <span class="plus">＋</span><span>添加错题</span>
+    </div>
+
+    <div class="entries" id="entries"></div>
+    <div class="empty-hint" id="emptyHint">
+      还没有记录<br>点上方按钮添加 note / 错题（一条子条目 = 一条记录，条数不限）
+    </div>
+
+    <div class="foot">
+      <button class="done" onclick="finish()">Done</button>
+    </div>
+  </div>
+</div>
+
+<p class="hint">Demo 4 · 学习总结（长按结束后进入）—— 只有「添加note」「添加错题」「Done」三件套 + 子条目；<b>点按钮进记录编辑</b>，点子条目可再编辑，Done → 回主界面</p>
+
+<script>
+  var subject = JSON.parse(localStorage.getItem('demo_subject') || 'null') || '未选科目';
+  var duration = JSON.parse(localStorage.getItem('demo_duration') || '0') || 0;
+  var entries = JSON.parse(localStorage.getItem('demo_entries') || '[]');
+
+  document.getElementById('subjectName').textContent = subject;
+  (function () {
+    var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    var h = Math.floor(duration / 3600), m = Math.floor(duration % 3600 / 60), s = duration % 60;
+    document.getElementById('duration').textContent = p(h) + ':' + p(m) + ':' + p(s);
+  })();
+
+  function render() {
+    var box = document.getElementById('entries');
+    box.innerHTML = '';
+    document.getElementById('emptyHint').style.display = entries.length ? 'none' : 'block';
+
+    entries.forEach(function (en, idx) {
+      var row = document.createElement('div');
+      row.className = 'entry';
+      var hasText = en.content && en.content.trim().length;
+      var text = hasText
+        ? escapeHtml(en.content)
+        : (en.images && en.images.length ? '（纯图片记录 · ' + en.images.length + ' 张）' : '（空）');
+      row.innerHTML =
+        '<div class="e-text' + (hasText ? '' : ' empty') + '">' + text + '</div>' +
+        '<span class="badge ' + (en.type === 'wrong' ? 'wrong' : 'note') + '">' +
+          (en.type === 'wrong' ? '错题' : 'note') + '</span>' +
+        '<span class="chev">›</span>';
+      row.onclick = function () { editEntry(idx); };
+      box.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function addEntry(type) {
+    // 新建一条空记录并直接进编辑（类型由入口按钮定死）
+    entries.push({ type: type, content: '', tags: [], images: [] });
+    localStorage.setItem('demo_entries', JSON.stringify(entries));
+    location.href = 'demo_5_entry_edit.html?index=' + (entries.length - 1);
+  }
+
+  function editEntry(idx) {
+    location.href = 'demo_5_entry_edit.html?index=' + idx;
+  }
+
+  function finish() {
+    // Done：session 落库（demo 只置状态），回主界面
+    localStorage.setItem('demo_learned', JSON.stringify(true));
+    location.href = 'demo_1_main.html';
+  }
+
+  render();
+</script>
+
+</body>
+</html>

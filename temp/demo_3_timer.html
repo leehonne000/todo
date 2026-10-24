@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>横屏计时 Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #ECEAE4;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 12px;
+    gap: 14px;
+  }
+  .phone {
+    width: 748px;
+    height: 375px;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    color: #fff;
+    box-shadow: 0 18px 48px rgba(20, 24, 32, 0.28);
+    flex: none;
+  }
+  @media (max-width: 800px) {
+    .phone { width: 96vw; height: calc(96vw * 0.5); }
+  }
+  .bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('../pics/background/太空/Nebula__hlmflgnnmmojlnbmaokpfcjdkhkjbnok.png');
+    background-size: cover;
+    background-position: center;
+  }
+  .scrim { position: absolute; inset: 0; background: rgba(10, 10, 26, 0.42); }
+
+  /* 四要素布局 */
+  .stage { position: absolute; inset: 0; }
+
+  .subject-chip {
+    position: absolute;
+    top: 18px; left: 22px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    font-size: 12.5px;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* 计时器（当前时间上方，小字号） */
+  .timer {
+    position: absolute;
+    left: 50%; top: 44px;
+    transform: translateX(-50%);
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    color: #FAC775;
+  }
+
+  /* 当前时间（最中间，大字） */
+  .clock {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    font-weight: 250;
+    letter-spacing: 4px;
+    text-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 暂停按钮（左下，圆形蓝 ↔ 暂停态方形） */
+  .pause {
+    position: absolute;
+    left: 30px; bottom: 26px;
+    width: 62px; height: 62px;
+    border: none;
+    border-radius: 50%;
+    background: #4E8FD9;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(78, 143, 217, 0.4);
+    transition: border-radius 0.18s ease, transform 0.14s ease;
+  }
+  .pause:active { transform: scale(0.94); }
+  .pause.paused { border-radius: 16px; }
+  .pause .icon { display: flex; gap: 5px; align-items: center; }
+  .pause .bar {
+    width: 6px; height: 22px;
+    background: #fff;
+    border-radius: 2px;
+  }
+  .pause.paused .icon { display: block; width: 0; height: 0; }
+  .pause.paused .icon .bar { display: none; }
+  .pause.paused .icon::after {
+    content: "";
+    display: block;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 11px 0 11px 18px;
+    border-color: transparent transparent transparent #fff;
+    margin-left: 3px;
+  }
+
+  /* 结束按钮（右下，长按） */
+  .end-wrap {
+    position: absolute;
+    right: 30px; bottom: 26px;
+    width: 62px; height: 62px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .end-ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(#FAC775 calc(var(--p, 0) * 1turn), rgba(255, 255, 255, 0.18) 0);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .end-ring::after {
+    content: "";
+    position: absolute; inset: 4px;
+    border-radius: 50%;
+    background: rgba(28, 22, 12, 0.55);
+  }
+  .end-label {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    z-index: 2;
+  }
+  .end-label .sub { font-size: 9px; font-weight: 400; letter-spacing: 0.5px; color: rgba(255,255,255,0.75); }
+  .end-wrap.holding .end-ring { filter: brightness(1.15); }
+
+  .hint {
+    font-size: 12px;
+    color: #7a776f;
+    text-align: center;
+    max-width: 560px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="bg"></div>
+  <div class="scrim"></div>
+
+  <div class="stage">
+    <div class="subject-chip" id="subjectChip">科目</div>
+
+    <div class="timer" id="timer">00:00:00</div>
+    <div class="clock" id="clock">--:--:--</div>
+
+    <button class="pause" id="pauseBtn" onclick="togglePause()" title="暂停 / 继续">
+      <div class="icon"><div class="bar"></div><div class="bar"></div></div>
+    </button>
+
+    <div class="end-wrap" id="endWrap" title="长按结束">
+      <div class="end-ring" id="endRing"></div>
+      <div class="end-label">结束<span class="sub">长按</span></div>
+    </div>
+  </div>
+</div>
+
+<p class="hint">Demo 3 · 横屏计时（选科目后进入）—— 大字当前时间 + 小字计时器；左下暂停（圆 ↔ 方）；<b>长按右下「结束」约 0.8s</b>（进度环走满）→ 学习总结页</p>
+
+<script>
+  var subject = JSON.parse(localStorage.getItem('demo_subject') || 'null') || '未选科目';
+  document.getElementById('subjectChip').textContent = subject;
+
+  // ---- 当前时间（大字） ----
+  function tickClock() {
+    var d = new Date();
+    var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    document.getElementById('clock').textContent =
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ---- 学习计时器（净学习秒数，暂停不计） ----
+  var elapsed = 0;      // 净秒数
+  var running = true;
+  setInterval(function () {
+    if (!running) return;
+    elapsed += 1;
+    renderTimer();
+  }, 1000);
+
+  function renderTimer() {
+    var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    var h = Math.floor(elapsed / 3600), m = Math.floor(elapsed % 3600 / 60), s = elapsed % 60;
+    document.getElementById('timer').textContent = p(h) + ':' + p(m) + ':' + p(s);
+  }
+
+  function togglePause() {
+    running = !running;
+    document.getElementById('pauseBtn').classList.toggle('paused', !running);
+  }
+
+  // ---- 长按结束 ----
+  var HOLD_MS = 800;
+  var holdTimer = null, holdStart = 0, rafId = null;
+  var wrap = document.getElementById('endWrap');
+  var ring = document.getElementById('endRing');
+
+  function setProgress(p) {
+    ring.style.setProperty('--p', p);
+  }
+
+  function holdTick() {
+    var p = Math.min(1, (Date.now() - holdStart) / HOLD_MS);
+    setProgress(p);
+    if (p >= 1) { finishHold(); return; }
+    rafId = requestAnimationFrame(holdTick);
+  }
+
+  function startHold(e) {
+    e.preventDefault();
+    wrap.classList.add('holding');
+    holdStart = Date.now();
+    rafId = requestAnimationFrame(holdTick);
+  }
+
+  function cancelHold() {
+    wrap.classList.remove('holding');
+    cancelAnimationFrame(rafId);
+    setProgress(0);
+  }
+
+  function finishHold() {
+    wrap.classList.remove('holding');
+    cancelAnimationFrame(rafId);
+    setProgress(1);
+    localStorage.setItem('demo_duration', JSON.stringify(elapsed));
+    location.href = 'demo_4_summary.html';
+  }
+
+  wrap.addEventListener('mousedown', startHold);
+  wrap.addEventListener('touchstart', startHold, { passive: false });
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (ev) {
+    wrap.addEventListener(ev, cancelHold);
+  });
+  // 防止长按触发右键菜单
+  wrap.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+</script>
+
+</body>
+</html>
