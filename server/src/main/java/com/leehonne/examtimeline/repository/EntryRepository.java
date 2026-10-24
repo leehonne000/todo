@@ -1,0 +1,23 @@
+package com.leehonne.examtimeline.repository;
+
+import com.leehonne.examtimeline.entity.Entry;
+import com.leehonne.examtimeline.enums.ReviewStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public interface EntryRepository extends JpaRepository<Entry, Long> {
+
+    /** Review 卡今日到期（idx_entry_review） */
+    List<Entry> findByUserIdAndReviewStatusAndNextDueAtLessThanEqual(
+            Long userId, ReviewStatus reviewStatus, LocalDate day);
+
+    /** 自由库浏览/筛选 */
+    List<Entry> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<Entry> findByUserIdAndSubjectIdOrderByCreatedAtDesc(Long userId, Long subjectId);
+
+    /** 某次学习的全部记录 */
+    List<Entry> findByUserIdAndSessionId(Long userId, Long sessionId);
+}

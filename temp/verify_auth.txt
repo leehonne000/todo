@@ -1,0 +1,55 @@
+== 0. 等服务就绪（最多 3 分钟）==
+服务已启动（5s）
+
+== 1. 登录接口连通（未注册邮箱，预期 code=2001）==
+{"code":2001,"message":"邮箱或密码错误","data":null}
+
+== 2. 发码接口连通（purpose=2 未注册邮箱，预期 code=3002，不会真发信）==
+{"code":3002,"message":"该邮箱未注册","data":null}
+
+== 3. 直灌验证码行（purpose=1）替代发信 ==
+
+== 4. 注册（预期 code=0 + token）==
+{"code":0,"message":"ok","data":{"token":"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2IiwiaWF0IjoxNzkyODMxMDk5LCJleHAiOjE3OTM0MzU4OTl9.VrIQPlRMhreUDxVFNS2M9_ips-0AABseuQOtwe1HTo-qQKnMziX98aHRp0rHzrdo","userId":6,"email":"test_login@example.com"}}
+
+
+== 5. 重复注册（预期 code=3001 已注册）==
+{"code":3001,"message":"该邮箱已注册，请直接登录","data":null}
+
+== 6. 登录正确密码（预期 token）==
+{"code":0,"message":"ok","data":{"token":"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2IiwiaWF0IjoxNzkyODMxMTAzLCJleHAiOjE3OTM0MzU5MDN9._RN0hNcIwRTgT-H-igTgOVg0jc2AYZjivxqTHjBlMthUFc6ltHGHxWlh5XM0p79j","userId":6,"email":"test_login@example.com"}}
+
+== 7. 登录错误密码（预期 code=2001）==
+{"code":2001,"message":"邮箱或密码错误","data":null}
+
+== 8. 找回密码（直灌 purpose=2 码 → 改密）==
+{"code":0,"message":"ok","data":null}
+旧密码登录（预期 2001）:
+{"code":2001,"message":"邮箱或密码错误","data":null}
+新密码登录（预期 token）:
+{"code":0,"message":"ok","data":{"token":"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2IiwiaWF0IjoxNzkyODMxMTA4LCJleHAiOjE3OTM0MzU5MDh9.s_aAWKWWhETsRcw3JDq9vLSTP7W4GCMDiWRaUyOfAWtApnASBYlXiYWhfdi68GBT","userId":6,"email":"test_login@example.com"}}
+
+== 9. 验证码一次性消费（重复用同码注册，预期 1001 验证码无效）==
+{"code":1001,"message":"验证码无效或已过期，请重新获取","data":null}
+
+== 10. JWT 鉴权（带 token 期望过门卫 404；不带期望 401/403）==
+带 token:
+HTTP 404
+不带 token:
+HTTP 403
+
+== 11. 落库核对 ==
+id	email	email_verified	exam_year
+6	test_login@example.com		2027
+user_id	name	sort_order
+6	政治	0
+6	英语一	1
+6	数学三	2
+6	计算机学科专业基础综合(408)	3
+email	purpose	code	used
+test_login@example.com	1	246810	1
+test_login@example.com	1	135790	0
+test_login@example.com	2	112233	1
+other@example.com	1	999999	1
+
+== 完成 ==
