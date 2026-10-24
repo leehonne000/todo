@@ -1,5 +1,7 @@
 package com.leehonne.examtimeline.entity;
 
+import com.leehonne.examtimeline.enums.UserRole;
+import com.leehonne.examtimeline.enums.UserRoleConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,6 +32,11 @@ public class User {
     /** 邮箱激活标志：0=未激活(禁登录) 1=已激活 */
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
+
+    /** 角色：0=普通用户 1=超级管理员（管理信息模块博客，§5.1） */
+    @Convert(converter = UserRoleConverter.class)
+    @Column(nullable = false)
+    private UserRole role = UserRole.USER;
 
     /** 手机号（预留，v1 不做短信验证） */
     @Column(unique = true, length = 20)

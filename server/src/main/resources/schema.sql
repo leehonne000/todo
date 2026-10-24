@@ -21,6 +21,7 @@ CREATE TABLE t_user (
   email         VARCHAR(64)     NOT NULL COMMENT '登录标识：注册/登录/找回密码都用它',
   password_hash VARCHAR(100)    NOT NULL COMMENT 'BCrypt 密码哈希，不存明文',
   email_verified TINYINT        NOT NULL DEFAULT 0 COMMENT '邮箱激活标志：0=未激活(禁登录) 1=已激活',
+  role          TINYINT         NOT NULL DEFAULT 0 COMMENT '角色：0=普通用户 1=超级管理员（管理信息模块博客，2026-10-24）',
   phone         VARCHAR(20)              DEFAULT NULL COMMENT '手机号（预留，v1 不做短信验证）',
   exam_year     SMALLINT        NOT NULL COMMENT '考研届数（如 2027）：倒计时/时间线取数据的依据',
   created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
@@ -176,7 +177,28 @@ CREATE TABLE t_exam_milestone (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='考研硬节点（全局表，每年维护）';
 
 -- ------------------------------------------------------------
--- 10. t_verify_code 邮箱验证码
+-- 10. t_article 博客文章（2026-10-24 新增）
+-- 业务绑定：信息模块博客内容区（§5.1）——超级管理员发布，普通用户只读
+-- 草稿(0)/发布(1) 两态；下线=改回草稿（软控制不删行）
+-- ------------------------------------------------------------
+CREATE TABLE t_article (
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  author_id       BIGINT UNSIGNED NOT NULL COMMENT '作者=超级管理员（t_user.role=1，应用层校验）',
+  title           VARCHAR(120)    NOT NULL COMMENT '文章标题（列表页展示）',
+  content         TEXT            NOT NULL COMMENT '正文（v1 纯文本/Markdown 原文）',
+  cover_object_key VARCHAR(255)            DEFAULT NULL COMMENT '封面图 MinIO 对象键（可选，复用图片链路）',
+  status          TINYINT         NOT NULL DEFAULT 0 COMMENT '状态：0=草稿(仅管理员) 1=已发布(全员可见)',
+  published_at    DATETIME                 DEFAULT NULL COMMENT '发布时间（首次发布写入，列表倒序依据）；草稿为空',
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后编辑时间',
+  PRIMARY KEY (id),
+  KEY idx_article_status_published (status, published_at),
+  KEY idx_article_author (author_id),
+  CONSTRAINT fk_article_author FOREIGN KEY (author_id) REFERENCES t_user (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='博客文章（超级管理员发布）';
+
+-- ------------------------------------------------------------
+-- 11. t_verify_code 邮箱验证码
 -- 业务绑定：注册邮箱激活 + 找回密码（§1.2）；v1 落 MySQL 不引 Redis
 -- ------------------------------------------------------------
 CREATE TABLE t_verify_code (
