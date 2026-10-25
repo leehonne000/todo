@@ -5,7 +5,7 @@
 // ============================================================
 import { dateStr, addDaysStr, studyDate, parseDate } from '@/utils/format'
 
-const STORE_KEY = 'exam-timeline-mock-db-v11' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
+const STORE_KEY = 'exam-timeline-mock-db-v12' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
 const DEMO_CODE = '123456'
 
 // ---------- 工具 ----------

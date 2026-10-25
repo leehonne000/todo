@@ -8,7 +8,7 @@ import './styles/base.css'
 // 演示数据在浏览器 localStorage 里，代码侧无法主动删；此处开闸清一次：
 // 清空登录态/主题/壁纸偏好 + 旧版 mock 数据，演示数据由 mock v3 重新播种。
 // 标记落位后本段自动失效，之后正常使用不再触发。
-const RESET_MARK = 'exam-timeline-reset-20261025-9'
+const RESET_MARK = 'exam-timeline-reset-20261025-10'
 if (localStorage.getItem(RESET_MARK) !== '1') {
   for (const k of [
     'exam-timeline-auth',

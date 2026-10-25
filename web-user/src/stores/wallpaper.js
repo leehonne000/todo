@@ -1,10 +1,12 @@
-// 壁纸自定义：分类随机换壁纸 + 交叉过渡 + localStorage 记忆 + 每日更新开关 + 画面调节
+// 壁纸自定义：分类随机换壁纸 + 交叉过渡 + localStorage 记忆 + 每日更新开关 + 画面调节 + 动效强度
 import { defineStore } from 'pinia'
 import { ref, shallowRef, computed, watch } from 'vue'
 import { dateStr } from '@/utils/format'
 
 const KEY = 'exam-timeline-wallpaper'
 const DEFAULT = { src: '/wallpaper.png', category: null, fileName: 'Out on a Limb' }
+/** 动效强度默认值（0~100，鼠标视差幅度百分比） */
+export const DEFAULT_MOTION = 50
 
 /** 当前壁纸（两层交叉过渡用） */
 export const useWallpaperStore = defineStore('wallpaper', () => {
@@ -27,6 +29,9 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
   const contrast = ref(saved?.adjust?.contrast ?? 100)
   const saturate = ref(saved?.adjust?.saturate ?? 100)
 
+  // 动效强度（0~100）：鼠标移动时壁纸视差位移的幅度，0 = 纹丝不动
+  const motion = ref(saved?.motion ?? DEFAULT_MOTION)
+
   const filterCss = computed(() =>
     `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturate.value}%)`
   )
@@ -38,11 +43,12 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
       fileName: fileName.value,
       dailyUpdate: dailyUpdate.value,
       lastDaily: lastDaily.value,
+      motion: motion.value,
       adjust: { brightness: brightness.value, contrast: contrast.value, saturate: saturate.value }
     }))
   }
 
-  watch([brightness, contrast, saturate], persist)
+  watch([brightness, contrast, saturate, motion], persist)
 
   // 预加载完成才切换，避免拉大图时闪白
   function setWallpaper(src, meta = {}) {
@@ -90,11 +96,17 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     saturate.value = 100
   }
 
+  /** 动效强度归默认 */
+  function resetMotion() {
+    motion.value = DEFAULT_MOTION
+  }
+
   return {
     current, incoming, fading, category, fileName,
     dailyUpdate, lastDaily,
     brightness, contrast, saturate, filterCss,
-    setWallpaper, setDailyUpdate, dailyCheck, resetAdjust
+    motion,
+    setWallpaper, setDailyUpdate, dailyCheck, resetAdjust, resetMotion
   }
 })
 

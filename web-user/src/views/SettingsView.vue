@@ -40,7 +40,12 @@
 
         <transition name="slide">
           <div v-if="openSection === 'wallpaper'" class="menu-body">
-            <div class="preview-img" :style="{ backgroundImage: `url(${wp.current})`, filter: wp.filterCss }">
+            <!-- 预览图内层随鼠标小幅视差，拖动滑杆时可直接感受动效强度 -->
+            <div class="preview-img" @mousemove="onPreviewMove" @mouseleave="onPreviewLeave">
+              <div
+                class="preview-layer"
+                :style="{ backgroundImage: `url(${wp.current})`, filter: wp.filterCss, transform: previewShift }"
+              ></div>
               <div class="preview-tag">
                 <span class="dim">{{ wp.category || '默认' }}</span>
                 <span class="name">{{ wp.fileName }}</span>
@@ -67,6 +72,13 @@
                 <input class="adj-range" type="range" min="0" max="200" step="1" v-model.number="wp.saturate" />
                 <span class="adj-val num">{{ wp.saturate }}%</span>
                 <button class="adj-reset" @click="wp.saturate = 100">恢复默认</button>
+              </div>
+              <!-- 动效强度：鼠标移动时壁纸视差位移幅度 -->
+              <div class="adj-row">
+                <span class="adj-label">动效强度</span>
+                <input class="adj-range" type="range" min="0" max="100" step="1" v-model.number="wp.motion" />
+                <span class="adj-val num">{{ wp.motion }}</span>
+                <button class="adj-reset" @click="wp.resetMotion()">恢复默认</button>
               </div>
             </div>
 
@@ -198,6 +210,23 @@ function toggle(name) {
 }
 
 // ---------- 壁纸 ----------
+// 预览图鼠标视差：演示动效强度效果（幅度 = 动效强度 × 12px）
+const pvx = ref(0)
+const pvy = ref(0)
+const previewShift = computed(() => {
+  const amp = (wp.motion / 100) * 12
+  return `translate3d(${(-pvx.value * amp).toFixed(1)}px, ${(-pvy.value * amp).toFixed(1)}px, 0)`
+})
+function onPreviewMove(e) {
+  const r = e.currentTarget.getBoundingClientRect()
+  pvx.value = ((e.clientX - r.left) / r.width) * 2 - 1
+  pvy.value = ((e.clientY - r.top) / r.height) * 2 - 1
+}
+function onPreviewLeave() {
+  pvx.value = 0
+  pvy.value = 0
+}
+
 async function pick(name) {
   if (rolling.value) return
   rolling.value = true
@@ -401,10 +430,17 @@ onMounted(async () => {
 .preview-img {
   height: clamp(150px, 24vw, 220px);
   border-radius: 12px;
-  background-size: cover;
-  background-position: center;
   position: relative;
   overflow: hidden;
+}
+/* 预览图内层：承载背景图 + 动效视差位移（超出一圈防露边） */
+.preview-layer {
+  position: absolute;
+  inset: -16px;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.35s ease-out;
+  will-change: transform;
 }
 .preview-tag {
   position: absolute;
@@ -415,6 +451,7 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2px;
   font-size: 11.5px;
+  z-index: 1;
 }
 .preview-tag .name { font-size: 13px; }
 
@@ -447,7 +484,7 @@ onMounted(async () => {
   gap: 11px;
   padding: 7px 0;
 }
-.adj-label { width: 46px; font-size: 12.5px; color: var(--text-dim); flex: none; }
+.adj-label { width: 58px; font-size: 12.5px; color: var(--text-dim); flex: none; white-space: nowrap; }
 .adj-range {
   flex: 1;
   accent-color: var(--theme-text);
