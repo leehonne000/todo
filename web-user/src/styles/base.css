@@ -1,0 +1,255 @@
+/* ============================================================
+   考研时间线 · 全局样式基座（不背单词风格）
+   视觉三要素：全屏壁纸 + 毛玻璃卡片 + 白字/琥珀橙数字
+   ============================================================ */
+
+:root {
+  /* 主题色（用户可在「自定义」里换，JS 写入这四个变量全局生效；默认 = 标准黑） */
+  --theme: #000000;
+  --theme-rgb: 0 0 0;
+  --theme-deep: #1f1f1f;
+  --theme-deep-rgb: 31 31 31;
+  --theme-on: #ffffff;
+  /* 可读墨色：深色主题自动提亮后用作文字/下划线/热力格（黑主题黑字会隐形） */
+  --theme-text: rgb(179 179 179);
+  --theme-text-rgb: 179 179 179;
+
+  /* 琥珀橙 = 主题色的默认态（兼容各处 var(--amber) 引用） */
+  --amber: var(--theme);
+  --amber-deep: var(--theme-deep);
+
+  /* 毛玻璃 */
+  --glass-bg: rgba(255, 255, 255, 0.13);
+  --glass-bg-strong: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-blur: 14px;
+
+  /* 文字 */
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.62);
+  --text-faint: rgba(255, 255, 255, 0.4);
+
+  --radius-lg: 22px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+
+  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+
+  /* ---------- 响应式布局量（clamp 随窗口连续变化） ----------
+     手机窄窗：贴边紧凑；PC 大屏：内容铺开、卡片拉远；拉窄窗口自动收拢 */
+  --content-max: clamp(480px, 70vw, 920px);   /* 内容栏最大宽度 */
+  --gap-cards: clamp(14px, 4vw, 64px);        /* 大卡片之间（Learn/Review 等入口） */
+  --gap-section: clamp(14px, 2.4vw, 30px);    /* 区块之间 */
+  --pad-x: clamp(18px, 3.5vw, 42px);          /* 页面左右留白 */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #app { height: 100%; }
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: #0a0a1a;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+/* ---------- 毛玻璃卡片 ---------- */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius-md);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- 通用排版 ---------- */
+.amber { color: var(--theme-text); }
+.dim { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- 页面容器（响应式：手机贴边 / PC 居中铺开） ---------- */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto; /* 关键：窄栏在宽屏必须居中 */
+  padding: 24px var(--pad-x) 120px;
+}
+
+.page-wide { width: 100%; max-width: var(--content-max); }
+.page-narrow { width: 100%; max-width: var(--content-max); }
+
+/* ---------- 底部导航（三模块入口，浮在壁纸上） ---------- */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  z-index: 50;
+}
+
+.dock-btn {
+  width: 64px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-dim);
+  transition: color 0.15s, background 0.15s;
+}
+
+.dock-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.1); }
+.dock-btn.active { color: var(--theme-text); }
+.dock-btn svg { width: 20px; height: 20px; }
+.dock-btn span { font-size: 11px; letter-spacing: 1px; }
+
+/* ---------- 按钮 ---------- */
+.btn-amber {
+  background: var(--theme-deep);
+  color: var(--theme-on, #2a1c05);
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 12px 28px;
+  font-size: 15px;
+  letter-spacing: 1px;
+  transition: transform 0.12s, filter 0.12s;
+}
+.btn-amber:hover { filter: brightness(1.08); }
+.btn-amber:active { transform: scale(0.96); }
+.btn-amber:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 999px;
+  padding: 12px 28px;
+  font-size: 15px;
+  transition: background 0.15s, transform 0.12s;
+}
+.btn-glass:hover { background: var(--glass-bg-strong); }
+.btn-glass:active { transform: scale(0.96); }
+
+/* ---------- 徽标 / chip ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.badge-note { background: rgba(255, 255, 255, 0.18); color: var(--text); }
+.badge-wrong { background: rgb(var(--theme-rgb) / 0.28); color: var(--theme-text); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgb(var(--theme-rgb) / 0.22);
+  border: 1px solid rgb(var(--theme-rgb) / 0.45);
+  color: var(--theme-text);
+  font-size: 13px;
+}
+.chip button { color: inherit; font-size: 15px; line-height: 1; opacity: 0.8; }
+
+/* ---------- 表单 ---------- */
+.field {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  font-size: 15px;
+  color: var(--text);
+}
+.field::placeholder { color: var(--text-faint); }
+.field:focus { border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.16); }
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 过场动画 ---------- */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.18s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ---------- 提示条 ---------- */
+.toast {
+  position: fixed;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: rgba(20, 22, 34, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---------- 模块页顶栏（退出 → 回主界面） ---------- */
+.topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.topbar .back {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  flex: none;
+}
+.topbar .back svg { width: 18px; height: 18px; }
+.topbar h1 { font-size: 19px; font-weight: 500; letter-spacing: 1px; }

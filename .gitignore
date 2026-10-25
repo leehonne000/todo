@@ -5,6 +5,10 @@
 __pycache__/
 *.pyc
 
+# 前端工程（node_modules/构建产物不进库）
+node_modules/
+dist/
+
 # 废弃素材
 pics/_rejected/
 
