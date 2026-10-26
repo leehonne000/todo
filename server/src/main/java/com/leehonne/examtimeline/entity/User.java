@@ -46,6 +46,14 @@ public class User {
     @Column(name = "exam_year", nullable = false)
     private Integer examYear;
 
+    /** 昵称（1~20 字符）；注册自动赋默认 = 邮箱 @ 前缀（§3.5） */
+    @Column(length = 20)
+    private String nickname;
+
+    /** 头像对象键；空 = 系统默认头像 /avatar-default.png（§3.5） */
+    @Column(name = "avatar_object_key", length = 255)
+    private String avatarObjectKey;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

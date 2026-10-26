@@ -14,7 +14,8 @@
     <div class="section-label dim">图片（{{ images.length }}/10）</div>
     <div class="images">
       <div v-for="(im, i) in images" :key="im.objectKey" class="thumb">
-        <img :src="im.previewUrl" alt="" />
+        <img :src="im.previewUrl" alt="" @click="openEditor(i)" />
+        <span class="edit-badge" @click="openEditor(i)">✎</span>
         <button class="del" @click="removeImage(i)">×</button>
       </div>
       <button v-if="images.length < 10" class="add-img" @click="fileInput?.click()">
@@ -22,6 +23,8 @@
       </button>
       <input ref="fileInput" type="file" accept="image/*" hidden @change="onFileChange" />
     </div>
+
+    <ImageEditor v-model:show="editorShow" :src="editorSrc" @apply="onEditorApply" />
 
     <!-- 自定义标签 -->
     <div class="section-label dim">标签</div>
@@ -52,6 +55,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TopBar from '@/components/TopBar.vue'
+import ImageEditor from '@/components/ImageEditor.vue'
 import { useLearnStore } from '@/stores/learn'
 import { uploadImage } from '@/api'
 import { toast } from '@/utils/toast'
@@ -65,13 +69,18 @@ const editIndex = ref(Number(route.query.index))
 if (Number.isNaN(editIndex.value)) editIndex.value = -1
 
 const content = ref('')
-const images = ref([]) // { objectKey, previewUrl }
+const images = ref([]) // { objectKey, previewUrl, localFile?, localUrl? }
 const tagNames = ref([])
 const tagInputOpen = ref(false)
 const tagDraft = ref('')
 const saving = ref(false)
 const fileInput = ref(null)
 const tagInput = ref(null)
+
+// 图片编辑器
+const editorShow = ref(false)
+const editorSrc = ref('')
+let editingIndex = -1
 
 // 进入时回填（编辑已有草稿）
 onMounted(() => {
@@ -112,7 +121,43 @@ async function onFileChange(e) {
   try {
     // 契约 §5.5：先传图拿 objectKey，Done 时随条目归档
     const data = await uploadImage(file)
-    images.value.push({ objectKey: data.objectKey, previewUrl: data.previewUrl })
+    images.value.push({
+      objectKey: data.objectKey,
+      previewUrl: data.previewUrl,
+      localFile: file,
+      localUrl: URL.createObjectURL(file)
+    })
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+/** 打开图片编辑器：优先编辑本地原图（避开跨域画布限制） */
+function openEditor(i) {
+  const im = images.value[i]
+  if (!im) return
+  editingIndex = i
+  editorSrc.value = im.localUrl || im.previewUrl
+  editorShow.value = true
+}
+
+/** 编辑应用：重新上传成品并替换该项 */
+async function onEditorApply(blob) {
+  const i = editingIndex
+  if (i < 0 || i >= images.value.length) return
+  saving.value = true
+  try {
+    const file = new File([blob], 'edited.jpg', { type: 'image/jpeg' })
+    const data = await uploadImage(file)
+    images.value[i] = {
+      objectKey: data.objectKey,
+      previewUrl: data.previewUrl,
+      localFile: file,
+      localUrl: URL.createObjectURL(blob)
+    }
+    toast('编辑已应用')
   } catch (err) {
     toast(err.message)
   } finally {
@@ -161,7 +206,22 @@ function onSave() {
   border-radius: 10px;
   overflow: hidden;
 }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+.thumb .edit-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 .thumb .del {
   position: absolute;
   top: 2px;

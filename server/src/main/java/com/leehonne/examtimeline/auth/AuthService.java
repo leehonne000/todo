@@ -83,6 +83,8 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setEmailVerified(true);   // 激活码校验成功即激活
         user.setExamYear(req.getExamYear());
+        // 默认昵称 = 邮箱 @ 前缀（§3.5）；头像留空 = 系统默认头像
+        user.setNickname(email.contains("@") ? email.substring(0, email.indexOf('@')) : email);
         userRepository.save(user);
 
         List<String> names = req.getSubjects().stream()

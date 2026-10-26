@@ -55,7 +55,7 @@
 | A3 | 填**真实 QQ 邮箱** + 密码(6~32) + 届数(2027) + 选 4 门科目 → 点「发验证码」 | `POST /api/auth/send-code` → code=0 | `t_verify_code` +1 行（purpose=1）；**QQ 邮箱收到验证码邮件**（真实发信首次验证！收不到就反馈） |
 | A4 | 填 6 位验证码 → 点注册 | `POST /api/auth/register` → code=0，响应含 token | `t_user` +1 行（role=0、昵称=邮箱@前缀）；`t_subject` **+4 行**（你的科目） |
 | A5 | 自动进主界面 | `GET /api/home` → `{checkedInToday:false, todayLearned:false, dueReviewCount:0}` | — |
-| A6 | 点「签到」 | `POST /api/check-ins` → code=0 | `t_check_in` +1 行（check_in_date=今天学习日） |
+| A6 | 点「签到」 | `POST /api/check-ins` → code=0；按钮播庆祝动画（对勾+"今日已签"）1.7 秒后**淡出消失** | `t_check_in` +1 行（check_in_date=今天学习日） |
 | A7 | 再点一次签到 | code=3001「今天已签到」 | 无新行 |
 | A8 | 退出登录 → 回登录页 | — | **输入框又应为空** |
 | A9 | 故意输错密码登录 | code=2001 | 无变化 |
@@ -73,7 +73,7 @@
 | B1 | 主界面点 Learn 卡 → 选科目页 | `GET /api/subjects` → 注册时那 4 门 | 只读 `t_subject`，无新数据 |
 | B2 | 点一门科目（如「数学」）→ 进横屏计时 | `POST /api/sessions` → `{id, startedAt}` | `t_study_session` +1 行：subject_id=所选、duration=0、ended_at=NULL |
 | B3 | 跑 30 秒 → 暂停 5 秒 → 恢复再 10 秒 → **长按结束** | `POST /api/sessions/{id}/finish` `{durationSeconds}` | 该行 **duration_seconds≈40**（不含暂停）、ended_at 有值。秒数和体感差很多就反馈 |
-| B4 | 总结页 →「添加note」→ 写文字 `测试考点A` + 标签 `马原`、`重点`（回车生成）+ **传 2 张图** → 保存 | 每张图 `POST /api/uploads/images` → code=0（sizeBytes>0，缩略图应显示）；保存只是前端暂存 | **表里还没有记录**；图片在 MinIO 的 `user_{id}/tmp/`（控制台可看） |
+| B4 | 总结页 →「添加note」→ 写文字 `测试考点A` + 标签 `马原`、`重点`（回车生成）+ **传 2 张图**（可**点缩略图进图片编辑器**：旋转/滤镜/亮度/对比度，「更多效果」里有饱和度/色温/马赛克画笔）→ 保存 | 每张图 `POST /api/uploads/images` → code=0（sizeBytes>0，缩略图应显示）；保存只是前端暂存 | **表里还没有记录**；图片在 MinIO 的 `user_{id}/tmp/`（控制台可看） |
 | B5 | 「添加错题」→ 只传 1 张图、不写文字 → 保存（纯图记录） | 同上上传 | 同上 |
 | B6 | 点 **Done** | `POST /api/sessions/{id}/entries` → `data=[id1,id2]` | `t_entry` **+2 行**：type=1/2、subject_id=继承、**round=0、next_due_at=记录日+1、review_status=0**、第一行 content=测试考点A；`t_tag` +2；`t_entry_tag` +2；`t_entry_image` **+3 行**（object_key=`user_{uid}/entry_{eid}/…`）；MinIO 里 **tmp 对象消失**、`entry_{eid}/` 出现 3 个对象 |
 | B7 | 自动回主界面 | `GET /api/home` → **todayLearned=true** | 今日学习卡应打勾 ✓ |

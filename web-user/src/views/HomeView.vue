@@ -12,15 +12,20 @@
       </button>
     </header>
 
-    <!-- 签到卡 -->
-    <button class="checkin glass-strong" :class="{ done: home.checkedInToday }" @click="onCheckIn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" />
-        <path v-if="home.checkedInToday" d="M9 15l2 2 4-4" stroke-width="2" />
-      </svg>
-      <span class="c-label">{{ home.checkedInToday ? '已签到' : '签到' }}</span>
-      <span class="c-date num">{{ todayPretty }}</span>
-    </button>
+    <!-- 签到卡：点击后先播庆祝动画（今日已签 ✓），停留片刻再淡出 -->
+    <Transition name="checkin-out">
+      <button v-if="!home.checkedInToday" class="checkin glass-strong"
+              :class="{ celebrating: justChecked }" :disabled="justChecked" @click="onCheckIn">
+        <svg v-if="!justChecked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+        <svg v-else class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="draw-check" d="M4 12.5l5 5 11-11" />
+        </svg>
+        <span class="c-label">{{ justChecked ? '今日已签' : '签到' }}</span>
+        <span class="c-date num">{{ todayPretty }}</span>
+      </button>
+    </Transition>
 
     <!-- Learn / Review 双卡（贴底） -->
     <div class="cards">
@@ -55,25 +60,34 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const home = ref({ checkedInToday: false, todayLearned: false, dueReviewCount: 0 })
+const justChecked = ref(false) // 签到庆祝动画进行中
 // 学习日口径：凌晨 4 点前仍算前一天
 const todayPretty = prettyDate(studyDate())
 
 async function load() {
-  try {
-    const [h, p] = await Promise.all([getHome(), getProfile()])
-    home.value = h
-    auth.setProfile(p)
-  } catch (e) {
-    toast(e.message)
+  // 解耦：profile 拉取失败不能拖垮主界面状态（曾经 Promise.all 一挂全挂）
+  const [h, p] = await Promise.allSettled([getHome(), getProfile()])
+  if (h.status === 'fulfilled') {
+    home.value = h.value
+  } else {
+    toast(h.reason?.message || '主界面状态加载失败')
+  }
+  if (p.status === 'fulfilled') {
+    auth.setProfile(p.value)
+  } else {
+    toast(p.reason?.message || '资料加载失败')
   }
 }
 
 async function onCheckIn() {
-  if (home.value.checkedInToday) return toast('今天已经签过到啦')
+  if (home.value.checkedInToday || justChecked.value) return toast('今天已经签过到啦')
   try {
     await checkIn()
-    home.value.checkedInToday = true
-    toast('签到成功，+1 天坚持')
+    // 先播庆祝动画，停留片刻再消失（交互反馈）
+    justChecked.value = true
+    setTimeout(() => {
+      home.value.checkedInToday = true
+    }, 1700)
   } catch (e) {
     toast(e.message)
   }
@@ -138,6 +152,28 @@ onMounted(load)
 }
 .checkin:active { transform: scale(0.96); }
 .checkin svg { width: 32px; height: 32px; opacity: 0.92; }
+
+/* 签到庆祝动画：弹跳 + 对勾描线，然后按钮淡出 */
+.checkin.celebrating {
+  animation: checkin-pop 0.55s ease;
+  color: var(--theme-text);
+}
+.checkin.celebrating .check-svg { opacity: 1; }
+.draw-check {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: checkin-draw 0.55s 0.15s ease forwards;
+}
+@keyframes checkin-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+@keyframes checkin-draw {
+  to { stroke-dashoffset: 0; }
+}
+.checkin-out-leave-active { transition: opacity 0.45s ease, transform 0.45s ease; }
+.checkin-out-leave-to { opacity: 0; transform: scale(0.9); }
 .checkin .c-label { font-size: 17px; font-weight: 500; letter-spacing: 2px; }
 .checkin .c-date { font-size: 13px; color: var(--text-dim); letter-spacing: 0.5px; }
 .checkin.done .c-label { color: var(--theme-text); }
