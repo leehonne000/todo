@@ -128,9 +128,9 @@
         <transition name="slide">
           <div v-if="openSection === 'theme'" class="menu-body">
             <div class="swatches">
-              <!-- 恢复默认（标准黑）：与其他色卡平级 -->
-              <button class="swatch" :class="{ on: theme.main === '#000000' }" @click="theme.resetDefault()">
-                <i class="dot" style="background: #000000"></i>
+              <!-- 恢复默认（标准白）：与其他色卡平级 -->
+              <button class="swatch" :class="{ on: theme.main === '#ffffff' }" @click="theme.resetDefault()">
+                <i class="dot" style="background: #ffffff"></i>
                 <span class="s-name">恢复默认</span>
               </button>
               <button
@@ -597,7 +597,7 @@ onMounted(async () => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(128, 128, 128, 0.45);
 }
 .swatch.on .dot { border-color: #fff; }
 .swatch .s-name { font-size: 11px; color: var(--text-dim); }

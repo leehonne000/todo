@@ -1,8 +1,8 @@
 <template>
   <div class="page">
     <div class="auth-box glass-strong">
-      <h1 class="title">考研时间线</h1>
-      <p class="sub">记录学过的，复习该忘的</p>
+      <img class="brand-logo" src="/logo.svg" alt="Big Tree" />
+      <h1 class="title">Big Tree</h1>
 
       <form @submit.prevent="onSubmit">
         <!-- readonly 直到聚焦：挡住浏览器自动填充旧账号（Chrome 会无视 autocomplete=off） -->
@@ -79,7 +79,8 @@ async function onSubmit() {
   max-width: 400px;
   padding: 40px 34px 30px;
 }
-.title { font-size: 26px; font-weight: 500; letter-spacing: 3px; text-align: center; }
+.brand-logo { display: block; width: 88px; height: 88px; margin: 0 auto 14px; }
+.title { font-size: 26px; font-weight: 500; letter-spacing: 3px; text-align: center; margin-bottom: 32px; }
 .sub { margin: 10px 0 30px; text-align: center; color: var(--text-dim); font-size: 14px; letter-spacing: 1px; }
 form { display: flex; flex-direction: column; gap: 14px; }
 .submit { margin-top: 8px; width: 100%; padding: 14px; font-size: 16px; }

@@ -421,13 +421,14 @@ onUnmounted(() => {
 .center { text-align: center; position: relative; z-index: 2; }
 .timer-num {
   font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 1000;
   color: var(--theme-text);
   letter-spacing: 2px;
   margin-bottom: 10px;
 }
 .clock-num {
   font-size: clamp(56px, 11vw, 120px);
-  font-weight: 200;
+  font-weight: 1000;
   letter-spacing: 4px;
   line-height: 1.05;
 }

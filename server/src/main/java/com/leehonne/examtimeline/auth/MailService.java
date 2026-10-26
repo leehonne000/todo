@@ -30,9 +30,9 @@ public class MailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, StandardCharsets.UTF_8.name());
-            helper.setFrom(from);
+            helper.setFrom(from, "Big Tree");
             helper.setTo(to);
-            helper.setSubject("【考研时间线】" + scene + "验证码");
+            helper.setSubject("【Big Tree】" + scene + "验证码");
             helper.setText(buildHtml(code, scene), true);
             mailSender.send(message);
             log.info("验证码邮件已发送 to={} scene={}", to, scene);
@@ -43,10 +43,11 @@ public class MailService {
     }
 
     private String buildHtml(String code, String scene) {
-        return "<div style=\"font-family:sans-serif;padding:20px;color:#333\">"
-                + "<h2 style=\"margin:0 0 12px\">考研时间线</h2>"
+        return "<div style=\"font-family:sans-serif;padding:24px;color:#333\">"
+                + "<h2 style=\"margin:0 0 4px;color:#2F4A1E\">🌳 Big Tree</h2>"
+                + "<p style=\"margin:0 0 16px;color:#7A8B6B;font-size:13px;letter-spacing:1px\">考研时间和知识点规划助手</p>"
                 + "<p>你正在" + scene + "，验证码为：</p>"
-                + "<p style=\"font-size:28px;letter-spacing:6px;font-weight:bold;color:#854F0B\">" + code + "</p>"
+                + "<p style=\"font-size:28px;letter-spacing:6px;font-weight:bold;color:#559238\">" + code + "</p>"
                 + "<p style=\"color:#888\">10 分钟内有效。若非本人操作，请忽略本邮件。</p>"
                 + "</div>";
     }

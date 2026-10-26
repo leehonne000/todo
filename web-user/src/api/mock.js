@@ -5,7 +5,7 @@
 // ============================================================
 import { dateStr, addDaysStr, studyDate, parseDate } from '@/utils/format'
 
-const STORE_KEY = 'exam-timeline-mock-db-v12' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
+const STORE_KEY = 'exam-timeline-mock-db-v15' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
 const DEMO_CODE = '123456'
 
 // ---------- 工具 ----------
@@ -156,7 +156,7 @@ function seed() {
       {
         id: 3,
         title: '关于心态：焦虑是正常的',
-        content: '考研是场持久战。你不是一个人在焦虑。\n\n几个小建议：\n· 和昨天的自己比，不和别人比；\n· 累了就休息，休息不是犯罪；\n· 记录（比如用本系统记 note/错题）本身就是一种整理焦虑的方式。\n\n祝顺利。',
+        content: '考研是场持久战。你不是一个人在焦虑。\n\n几个小建议：\n· 和昨天的自己比，不和别人比；\n· 累了就休息，休息不是犯罪；\n· 记录（比如用 Big Tree 记 note/错题）本身就是一种整理焦虑的方式。\n\n祝顺利。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-15)}T09:00:00`, updatedAt: `${d(-15)}T09:00:00`
       },

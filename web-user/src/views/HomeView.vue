@@ -13,9 +13,10 @@
     </header>
 
     <!-- 签到卡：状态未回来前不渲染（已签到就从头到尾不出现，杜绝"闪一下再消失"）；
-         点击后先播庆祝动画（今日已签 ✓），停留片刻再淡出 -->
-    <Transition name="checkin-out">
-      <button v-if="homeReady && !home.checkedInToday" class="checkin glass-strong"
+         点击后先播庆祝动画（今日已签 ✓），随后原位置常驻 slogan 至当天结束；
+         当天内刷新/重进（checkedInToday=true）也直接显示 slogan -->
+    <Transition name="checkin-swap" mode="out-in">
+      <button v-if="homeReady && !home.checkedInToday" key="checkin" class="checkin glass-strong"
               :class="{ celebrating: justChecked }" :disabled="justChecked" @click="onCheckIn">
         <svg v-if="!justChecked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" />
@@ -26,6 +27,9 @@
         <span class="c-label">{{ justChecked ? '今日已签' : '签到' }}</span>
         <span class="c-date num">{{ todayPretty }}</span>
       </button>
+      <div v-else-if="homeReady" key="slogan" class="slogan">
+        <span class="slogan-text">Big Tree，Be a Tree</span>
+      </div>
     </Transition>
 
     <!-- Learn / Review 双卡（贴底） -->
@@ -175,12 +179,28 @@ onMounted(load)
 @keyframes checkin-draw {
   to { stroke-dashoffset: 0; }
 }
-.checkin-out-leave-active { transition: opacity 0.45s ease, transform 0.45s ease; }
-.checkin-out-leave-to { opacity: 0; transform: scale(0.9); }
+/* 签到卡 ⇄ slogan 切换：旧的淡出缩小，新的淡入接位 */
+.checkin-swap-leave-active { transition: opacity 0.45s ease, transform 0.45s ease; }
+.checkin-swap-leave-to { opacity: 0; transform: scale(0.9); }
+.checkin-swap-enter-active { transition: opacity 0.5s ease, transform 0.5s ease; }
+.checkin-swap-enter-from { opacity: 0; transform: scale(0.94); }
 .checkin .c-label { font-size: 17px; font-weight: 500; letter-spacing: 2px; }
 .checkin .c-date { font-size: 13px; color: var(--text-dim); letter-spacing: 0.5px; }
 .checkin.done .c-label { color: var(--theme-text); }
 .checkin.done svg { color: var(--theme-text); }
+
+/* 签到后常驻 slogan：纯文字标语（无卡片底），与签到卡同占位上下衔接 */
+.slogan {
+  margin: clamp(6vh, 9vh, 13vh) auto 0;
+  cursor: default;
+  text-align: center;
+}
+.slogan .slogan-text {
+  font-size: 30px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  color: var(--theme-text);
+}
 
 /* Learn / Review 卡：宽屏两个入口推远（space-between），窄窗自然收拢 */
 .cards {
@@ -215,6 +235,7 @@ onMounted(load)
 @media (min-width: 900px) {
   .checkin { width: 184px; height: 168px; }
   .checkin svg { width: 38px; height: 38px; }
+  .slogan .slogan-text { font-size: 38px; }
   .card { padding: 22px 24px 20px; }
   .card .c-title { font-size: 20px; }
   .card .c-num { font-size: 36px; }

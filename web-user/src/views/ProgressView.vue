@@ -160,7 +160,7 @@ function colorOf(name) {
 }
 
 function onShare() {
-  const text = `【考研时间线】累计学习 ${totalCount.value} 条记录、${Math.round(totalMinutes.value / 60)} 小时，连续签到 ${streak.value} 天。`
+  const text = `【Big Tree】累计学习 ${totalCount.value} 条记录、${Math.round(totalMinutes.value / 60)} 小时，连续签到 ${streak.value} 天。Be a Tree！`
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => toast('晒成绩文案已复制')).catch(() => toast(text))
   } else {

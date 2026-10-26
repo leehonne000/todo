@@ -16,8 +16,8 @@ export const PRESETS = [
   { name: '玫粉', main: '#ed93b1', deep: '#d4537e' }
 ]
 
-// 默认主题色 = 标准黑（2026-10-25 用户指定）
-const DEFAULT = { name: '默认黑', main: '#000000', deep: '#1f1f1f' }
+// 默认主题色 = 标准白（2026-10-26 用户指定）
+const DEFAULT = { name: '默认白', main: '#ffffff', deep: '#bfbfbf' }
 
 // ---------- 颜色小工具 ----------
 function parseHex(hex) {

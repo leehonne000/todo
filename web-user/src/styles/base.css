@@ -4,15 +4,15 @@
    ============================================================ */
 
 :root {
-  /* 主题色（用户可在「自定义」里换，JS 写入这四个变量全局生效；默认 = 标准黑） */
-  --theme: #000000;
-  --theme-rgb: 0 0 0;
-  --theme-deep: #1f1f1f;
-  --theme-deep-rgb: 31 31 31;
-  --theme-on: #ffffff;
+  /* 主题色（用户可在「自定义」里换，JS 写入这四个变量全局生效；默认 = 标准白） */
+  --theme: #ffffff;
+  --theme-rgb: 255 255 255;
+  --theme-deep: #bfbfbf;
+  --theme-deep-rgb: 191 191 191;
+  --theme-on: #2a1c05;
   /* 可读墨色：深色主题自动提亮后用作文字/下划线/热力格（黑主题黑字会隐形） */
-  --theme-text: rgb(179 179 179);
-  --theme-text-rgb: 179 179 179;
+  --theme-text: rgb(255 255 255);
+  --theme-text-rgb: 255 255 255;
 
   /* 琥珀橙 = 主题色的默认态（兼容各处 var(--amber) 引用） */
   --amber: var(--theme);

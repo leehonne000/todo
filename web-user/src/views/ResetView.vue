@@ -9,7 +9,7 @@
           <input v-model.trim="email" class="field" type="email" placeholder="注册邮箱"
                autocomplete="off" readonly @focus="unlockInput" />
           <button type="button" class="btn-glass code-btn" :disabled="countdown > 0" @click="onSendCode">
-            {{ countdown > 0 ? `${countdown}s` : '发验证码' }}
+            {{ countdown > 0 ? `${countdown}s` : '验证码' }}
           </button>
         </div>
         <input v-model.trim="code" class="field" maxlength="6" placeholder="6 位验证码" />
@@ -50,15 +50,21 @@ let timer = null
 
 async function onSendCode() {
   if (!email.value) return toast('先填邮箱')
+  if (countdown.value > 0) return
+  // 点击立刻开始倒计时，不让用户干等后台 SMTP 发信（1~3s）
+  countdown.value = 60
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0) clearInterval(timer)
+  }, 1000)
   try {
     const msg = await sendCode(email.value, 2) // purpose=2 找回密码
     toast(msg || '验证码已发送')
-    countdown.value = 60
-    timer = setInterval(() => {
-      countdown.value -= 1
-      if (countdown.value <= 0) clearInterval(timer)
-    }, 1000)
   } catch (e) {
+    // 发信失败：回滚倒计时，允许立刻重试
+    clearInterval(timer)
+    countdown.value = 0
     toast(e.message)
   }
 }
