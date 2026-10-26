@@ -13,6 +13,10 @@ public interface EntryRepository extends JpaRepository<Entry, Long> {
     List<Entry> findByUserIdAndReviewStatusAndNextDueAtLessThanEqual(
             Long userId, ReviewStatus reviewStatus, LocalDate day);
 
+    /** 主界面 Review 卡数字：今日应复习条数 */
+    long countByUserIdAndReviewStatusAndNextDueAtLessThanEqual(
+            Long userId, ReviewStatus reviewStatus, LocalDate day);
+
     /** 自由库浏览/筛选 */
     List<Entry> findByUserIdOrderByCreatedAtDesc(Long userId);
 

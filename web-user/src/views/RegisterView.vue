@@ -7,13 +7,15 @@
       <form @submit.prevent="onSubmit">
         <!-- 邮箱 + 验证码 -->
         <div class="row">
-          <input v-model.trim="email" class="field" type="email" placeholder="邮箱" autocomplete="email" />
+          <input v-model.trim="email" class="field" type="email" placeholder="邮箱"
+                 autocomplete="off" readonly @focus="unlockInput" />
           <button type="button" class="btn-glass code-btn" :disabled="countdown > 0" @click="onSendCode">
             {{ countdown > 0 ? `${countdown}s` : '发验证码' }}
           </button>
         </div>
         <input v-model.trim="code" class="field" maxlength="6" placeholder="6 位验证码" />
-        <input v-model="password" class="field" type="password" placeholder="密码（6~32 位）" autocomplete="new-password" />
+        <input v-model="password" class="field" type="password" placeholder="密码（6~32 位）"
+                 autocomplete="off" readonly @focus="unlockInput" />
         <input v-model.number="examYear" class="field" type="number" placeholder="考研届数，如 2027" />
 
         <!-- 科目组合：2~5 门 -->
@@ -56,6 +58,12 @@ const SUBJECT_PRESETS = ['政治', '英语一', '英语二', '数学一', '数�
 
 const router = useRouter()
 const auth = useAuthStore()
+
+
+/** 聚焦即解锁输入框（readonly 只是进页面时挡浏览器自动填充用） */
+function unlockInput(e) {
+  e.target.removeAttribute('readonly')
+}
 
 const email = ref('')
 const code = ref('')

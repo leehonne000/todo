@@ -6,13 +6,15 @@
 
       <form @submit.prevent="onSubmit">
         <div class="row">
-          <input v-model.trim="email" class="field" type="email" placeholder="注册邮箱" />
+          <input v-model.trim="email" class="field" type="email" placeholder="注册邮箱"
+               autocomplete="off" readonly @focus="unlockInput" />
           <button type="button" class="btn-glass code-btn" :disabled="countdown > 0" @click="onSendCode">
             {{ countdown > 0 ? `${countdown}s` : '发验证码' }}
           </button>
         </div>
         <input v-model.trim="code" class="field" maxlength="6" placeholder="6 位验证码" />
-        <input v-model="newPassword" class="field" type="password" placeholder="新密码（6~32 位）" autocomplete="new-password" />
+        <input v-model="newPassword" class="field" type="password" placeholder="新密码（6~32 位）"
+               autocomplete="off" readonly @focus="unlockInput" />
 
         <button class="btn-amber submit" type="submit" :disabled="loading">
           {{ loading ? '提交中…' : '重置密码' }}
@@ -33,6 +35,12 @@ import { sendCode, resetPassword } from '@/api'
 import { toast } from '@/utils/toast'
 
 const router = useRouter()
+
+/** 聚焦即解锁输入框（readonly 只是进页面时挡浏览器自动填充用） */
+function unlockInput(e) {
+  e.target.removeAttribute('readonly')
+}
+
 const email = ref('')
 const code = ref('')
 const newPassword = ref('')

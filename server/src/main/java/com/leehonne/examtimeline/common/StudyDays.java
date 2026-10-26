@@ -32,6 +32,14 @@ public final class StudyDays {
     }
 
     /**
+     * 学习日 D 的窗口起点 = D 04:00（窗口为 [dayStart(D), dayStart(D+1))）。
+     * SQL 侧对应：{@code started_at >= D+4h AND < D+1day+4h}。
+     */
+    public static LocalDateTime dayStart(LocalDate day) {
+        return day.atTime(4, 0);
+    }
+
+    /**
      * 记录日 → 第 round 轮到期日。
      * 入库用 round=0（记录日+1 天）；复习完成推进 round 后顺延。
      */

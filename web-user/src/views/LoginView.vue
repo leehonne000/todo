@@ -5,8 +5,11 @@
       <p class="sub">记录学过的，复习该忘的</p>
 
       <form @submit.prevent="onSubmit">
-        <input v-model.trim="email" class="field" type="email" placeholder="邮箱" autocomplete="email" />
-        <input v-model="password" class="field" type="password" placeholder="密码" autocomplete="current-password" />
+        <!-- readonly 直到聚焦：挡住浏览器自动填充旧账号（Chrome 会无视 autocomplete=off） -->
+        <input v-model.trim="email" class="field" type="email" placeholder="邮箱"
+               autocomplete="off" readonly @focus="unlockInput" />
+        <input v-model="password" class="field" type="password" placeholder="密码"
+               autocomplete="off" readonly @focus="unlockInput" />
 
         <button class="btn-amber submit" type="submit" :disabled="loading">
           {{ loading ? '登录中…' : '登录' }}
@@ -42,6 +45,11 @@ const auth = useAuthStore()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
+
+/** 聚焦即解锁输入框（readonly 只是进页面时挡自动填充用） */
+function unlockInput(e) {
+  e.target.removeAttribute('readonly')
+}
 
 function fillDemo() {
   email.value = 'demo@kaoyan.com'

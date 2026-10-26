@@ -1,0 +1,30 @@
+== 0. 等服务就绪 ==
+服务已启动
+
+== 1. 注册 ==
+PASS: 注册成功
+
+== 2. GET /api/home 初始态（预期 false/false/0）==
+{"code":0,"message":"ok","data":{"checkedInToday":false,"todayLearned":false,"dueReviewCount":0}}
+
+PASS: 初始态正确
+
+== 3. POST /api/check-ins 签到 ==
+{"code":0,"message":"ok","data":null}
+重复签到（预期 code=3001 今天已签到）:
+{"code":3001,"message":"今天已签到","data":null}
+PASS: 签到态翻真
+
+== 4. 学习后 todayLearned 翻真 + dueReviewCount ==
+{"code":0,"message":"ok","data":{"checkedInToday":true,"todayLearned":true,"dueReviewCount":0}}
+
+PASS: 今日学习翻真
+PASS: 到期数仍 0（明天才首到期）
+PASS: 拨到期后计数=1
+
+== 5. 未登录 401 ==
+home_no_token: HTTP=401
+checkin_no_token: HTTP=401
+
+== 6. 清场 ==
+测试数据已清空。
