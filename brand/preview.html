@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Tree · 品牌设计</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', 'Quicksand', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #FAF7F0;
+    color: #2F4A1E;
+    padding: 48px 24px 80px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+
+  .hero {
+    text-align: center;
+    padding: 56px 32px 48px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F3EFE4 100%);
+    border-radius: 28px;
+    margin-bottom: 40px;
+    border: 1px solid #E8E2D2;
+  }
+  .hero .mark { width: 240px; height: auto; margin-bottom: 8px; }
+  .hero h1 { font-size: 56px; font-weight: 800; letter-spacing: 2px; color: #2F4A1E; }
+  .hero .sub { margin-top: 10px; font-size: 18px; letter-spacing: 8px; color: #7A8B6B; }
+  .hero .motto {
+    margin-top: 24px; display: inline-block; padding: 10px 28px;
+    background: #EEF3E2; border-radius: 999px; font-size: 16px;
+    color: #55703D; letter-spacing: 3px; font-weight: 600;
+  }
+
+  .section {
+    background: #FFFFFF; border: 1px solid #E8E2D2;
+    border-radius: 24px; padding: 40px; margin-bottom: 32px;
+  }
+  .section h2 {
+    font-size: 24px; font-weight: 800; margin-bottom: 8px; color: #2F4A1E;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section h2::before { content: ''; width: 6px; height: 26px; background: #71AC4F; border-radius: 3px; }
+  .section .desc { font-size: 15px; color: #7A8B6B; line-height: 1.9; margin-bottom: 28px; max-width: 760px; }
+
+  .name-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 8px; }
+  .name-card { background: #F6F9EE; border: 1px solid #E2EACF; border-radius: 18px; padding: 22px; }
+  .name-card .icon { font-size: 30px; margin-bottom: 10px; }
+  .name-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; color: #3D5A26; }
+  .name-card p { font-size: 13.5px; line-height: 1.85; color: #7A8B6B; }
+
+  .poem {
+    margin-top: 26px; padding: 24px 28px; background: #FBF8EF;
+    border-left: 4px solid #FFD966; border-radius: 0 14px 14px 0;
+    font-size: 15px; line-height: 2.2; color: #5C6B4C; white-space: pre-line;
+  }
+  .poem .src { display: block; margin-top: 10px; font-size: 13px; color: #A3B092; letter-spacing: 2px; }
+
+  .showcase { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+  .card {
+    border-radius: 20px; padding: 36px 24px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px; min-height: 300px; border: 1px solid #E8E2D2;
+  }
+  .card.light { background: #FDFBF5; }
+  .card.dark { background: #2A2E25; border-color: #3A4033; }
+  .card.green { background: linear-gradient(160deg, #71AC4F 0%, #559238 100%); border-color: #4E8532; }
+  .card img { max-width: 78%; height: auto; }
+  .card .label { font-size: 12.5px; letter-spacing: 3px; color: #A3B092; font-weight: 700; }
+  .card.dark .label, .card.green .label { color: rgba(255,255,255,0.55); }
+
+  .icon-row { display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap; justify-content: center; padding: 20px 0 8px; }
+  .icon-item { text-align: center; }
+  .icon-item img { border-radius: 22%; box-shadow: 0 10px 28px rgba(80, 100, 50, 0.18); }
+  .icon-item .size { margin-top: 12px; font-size: 12px; color: #A3B092; letter-spacing: 1px; }
+
+  .palette { display: flex; gap: 16px; flex-wrap: wrap; }
+  .swatch { width: 132px; border-radius: 16px; overflow: hidden; border: 1px solid #E8E2D2; background: #fff; }
+  .swatch .block { height: 84px; }
+  .swatch .info { padding: 12px 14px; }
+  .swatch .info .n { font-size: 13px; font-weight: 800; color: #2F4A1E; }
+  .swatch .info .h { font-size: 11.5px; color: #A3B092; margin-top: 3px; letter-spacing: 0.5px; }
+
+  .usage { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+  .usage .item { padding: 22px; background: #F6F9EE; border-radius: 16px; border: 1px solid #E2EACF; }
+  .usage .item h4 { font-size: 15px; font-weight: 800; margin-bottom: 8px; color: #3D5A26; }
+  .usage .item p { font-size: 13px; line-height: 1.85; color: #7A8B6B; }
+
+  .footer-note { text-align: center; margin-top: 40px; font-size: 13px; color: #B5BFA4; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <img class="mark" src="big-tree-mark.svg" alt="Big Tree mark">
+    <h1>Big Tree</h1>
+    <div class="sub">考研时间规划</div>
+    <div class="motto">向下扎根 · 向上生长 · 在坚忍中积蓄力量</div>
+  </div>
+
+  <!-- Name -->
+  <div class="section">
+    <h2>Name · 名字释义</h2>
+    <p class="desc">
+      考研是一场漫长而高压的修行。与其在焦虑里诅咒，不如像一棵大树那样——把根深深扎进土里，沉默地积蓄力量。
+      飘来的是云，飘去的也是云；今天没人识得星星一颗，明天何妨做皓月一轮。名字取自汪国真《倘若才华得不到承认》中的「大树的精神」。
+    </p>
+    <div class="name-grid">
+      <div class="name-card">
+        <div class="icon">🌳</div>
+        <h3>Big Tree · 大树</h3>
+        <p>一棵概括的卡通树：不喧哗、不急躁，把力气用在看不见的地方。呼应产品哲学：只沉淀真正学过的东西。</p>
+      </div>
+      <div class="name-card">
+        <div class="icon">🌱</div>
+        <h3>扎根 · 时间规划</h3>
+        <p>脚下一枚小土丘，就是"扎根"的全部表达——不张扬，但稳。每一天的学习记录、复习节奏，都是向下扎的一步。</p>
+      </div>
+      <div class="name-card">
+        <div class="icon">✨</div>
+        <h3>星星 → 皓月</h3>
+        <p>「既然今天没人识得星星一颗，那么明日何妨做皓月一轮」。左侧的星芒是尚未被看见的努力，也是明日的自己。</p>
+      </div>
+      <div class="name-card">
+        <div class="icon">🎨</div>
+        <h3>不对称构图</h3>
+        <p>树干偏右约 3/4 处，树冠向左舒展，星星落在左侧留白——不是端端正正的"图标脸"，更像绘本里的一棵树。</p>
+      </div>
+    </div>
+
+    <div class="poem">与其诅咒    不如坚忍
+在坚忍中积蓄力量
+默默耕耘
+……
+飘来的是云
+飘去的也是云
+既然今天
+没人识得星星一颗
+那么明日
+何妨做    皓月一轮<span class="src">—— 汪国真《倘若才华得不到承认》（节选）</span></div>
+  </div>
+
+  <!-- Logo showcase -->
+  <div class="section">
+    <h2>Logo · 图形标</h2>
+    <p class="desc">
+      造型概括不琐碎：树冠是一个不规则的圆润团块，树干短而稳，脚下只有一枚小土丘示意扎根——土壤不抢画面，主角始终是树与星星。
+      整体不对称，树干偏右、树冠向左舒展，星星填补左侧留白。
+    </p>
+    <div class="showcase">
+      <div class="card light">
+        <img src="big-tree-mark.svg" alt="mark on light">
+        <div class="label">浅色背景 · 主图形标</div>
+      </div>
+      <div class="card dark">
+        <img src="big-tree-icon.svg" alt="icon on dark" style="max-width:62%; border-radius:22%;">
+        <div class="label">深色背景 · 圆角图标</div>
+      </div>
+      <div class="card green">
+        <img src="big-tree-mark.svg" alt="mark on green" style="filter: brightness(1.12) saturate(0.92);">
+        <div class="label">品牌绿背景 · 应用场景</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lockup -->
+  <div class="section">
+    <h2>Lockup · 横排组合</h2>
+    <p class="desc">图形标 + Big Tree 字标 + 中文副题「考研时间规划」+ 品牌副线「在坚忍中积蓄力量」。适用于官网头部、启动页、关于页。</p>
+    <div class="showcase" style="grid-template-columns: 1fr;">
+      <div class="card light" style="min-height: 240px;">
+        <img src="big-tree-logo.svg" alt="horizontal lockup" style="max-width: 92%;">
+        <div class="label">横排组合标</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App icon sizes -->
+  <div class="section">
+    <h2>App Icon · 图标尺寸</h2>
+    <p class="desc">iOS/Android/PWA 图标采用圆角方底 + 奶油色地。缩到桌面尺寸时，偏右的树与左侧星芒仍能一眼认出。</p>
+    <div class="icon-row">
+      <div class="icon-item"><img src="big-tree-icon.svg" width="160" height="160" alt="160"><div class="size">160 × 160</div></div>
+      <div class="icon-item"><img src="big-tree-icon.svg" width="120" height="120" alt="120"><div class="size">120 × 120</div></div>
+      <div class="icon-item"><img src="big-tree-icon.svg" width="72" height="72" alt="72"><div class="size">72 × 72</div></div>
+      <div class="icon-item"><img src="big-tree-icon.svg" width="48" height="48" alt="48"><div class="size">48 × 48</div></div>
+      <div class="icon-item"><img src="big-tree-icon.svg" width="32" height="32" alt="32"><div class="size">32 × 32</div></div>
+    </div>
+  </div>
+
+  <!-- Palette -->
+  <div class="section">
+    <h2>Palette · 品牌色</h2>
+    <p class="desc">取自大树本身：树冠的生长绿、树干的沉稳棕、泥土的温暖米色，加一颗星的暖黄。天然、安静、有生命力。</p>
+    <div class="palette">
+      <div class="swatch"><div class="block" style="background:#71AC4F"></div><div class="info"><div class="n">生长绿</div><div class="h">#71AC4F</div></div></div>
+      <div class="swatch"><div class="block" style="background:#559238"></div><div class="info"><div class="n">深根绿</div><div class="h">#559238</div></div></div>
+      <div class="swatch"><div class="block" style="background:#A97C50"></div><div class="info"><div class="n">树干棕</div><div class="h">#A97C50</div></div></div>
+      <div class="swatch"><div class="block" style="background:#E0C89C"></div><div class="info"><div class="n">泥土米</div><div class="h">#E0C89C</div></div></div>
+      <div class="swatch"><div class="block" style="background:#FFD966"></div><div class="info"><div class="n">星芒黄</div><div class="h">#FFD966</div></div></div>
+      <div class="swatch"><div class="block" style="background:#FDF6E3"></div><div class="info"><div class="n">奶油底</div><div class="h">#FDF6E3</div></div></div>
+      <div class="swatch"><div class="block" style="background:#2F4A1E"></div><div class="info"><div class="n">墨绿字</div><div class="h">#2F4A1E</div></div></div>
+    </div>
+  </div>
+
+  <!-- Usage -->
+  <div class="section">
+    <h2>Usage · 使用建议</h2>
+    <div class="usage">
+      <div class="item">
+        <h4>App 启动页</h4>
+        <p>深绿渐变底 + 白色图形标居中，底部一行小字「在坚忍中积蓄力量」，3 秒后进入主界面。</p>
+      </div>
+      <div class="item">
+        <h4>PWA / 桌面图标</h4>
+        <p>使用 big-tree-icon.svg 导出 512/192/180/128/64/32 全套尺寸，圆角系统按各自平台规范裁切。</p>
+      </div>
+      <div class="item">
+        <h4>PC 用户端侧边栏</h4>
+        <p>横排组合标（big-tree-logo.svg）置于侧边栏顶部，毛玻璃面板上用墨绿字版本即可。</p>
+      </div>
+      <div class="item">
+        <h4>管理后台</h4>
+        <p>用图形标单色版（绿或墨绿单色）即可，弱化存在感，保持后台工具气质。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">BIG TREE · 向下扎根，向上生长 · 每一个今天都是根系的一部分</div>
+</div>
+</body>
+</html>
