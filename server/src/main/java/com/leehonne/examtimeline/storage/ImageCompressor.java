@@ -88,6 +88,7 @@ public class ImageCompressor {
             }
             writer.setOutput(mos);
             writer.write(null, new IIOImage(image, null, null), param);
+            mos.flush(); // 必须先把缓存刷到底层流，否则 toByteArray() 拿到的是空字节（不能 close：try-with-resources 会再关一次抛异常）
             return new CompressedImage(out.toByteArray(), "image/webp", ".webp");
         } catch (Exception e) {
             return null;
@@ -147,6 +148,7 @@ public class ImageCompressor {
             writer.setOutput(mos);
             writer.write(null, new IIOImage(rgb, null, null), param);
             writer.dispose();
+            mos.flush(); // 必须先把缓存刷到底层流，否则 toByteArray() 拿到的是空字节（不能 close：try-with-resources 会再关一次抛异常）
             return out.toByteArray();
         }
     }

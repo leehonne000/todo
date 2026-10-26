@@ -1,0 +1,9 @@
+# 构建产物不进库（配方本身 build.sh/Dockerfile 进库，产物各机器现生成）
+minio
+minio-src.zip
+go*.zip
+toolchain/
+src/
+gocache/
+gomodcache/
+ca-certificates.crt

@@ -81,10 +81,12 @@ UP2=$(curl -s -X POST "$API/uploads/images" -H "$AUTH" -F "file=@$IMG2")
 KEY2=$(echo "$UP2" | field objectKey)
 URL2=$(echo "$UP2" | field previewUrl)
 [ -n "$KEY1" ] && [ -n "$KEY2" ] && log "PASS: objectKey1=$KEY1 / objectKey2=$KEY2" || { log "FAIL: 上传无 objectKey"; exit 1; }
+echo "$UP1" | grep -q '"sizeBytes":0,' && { log "FAIL: sizeBytes=0（空文件）"; exit 1; } || log "PASS: sizeBytes 非 0"
 log "预览 URL 取图（预期 HTTP 200 + 图片类型）:"
-curl -s -o /tmp/learn_img.bin -w "HTTP=%{http_code} type=%{content_type} size=%{size_download}\n" "$BASE$URL1" | tee -a "$OUT"
+SZ=$(curl -s -o /tmp/learn_img.bin -w "%{http_code} %{content_type} %{size_download}" "$URL1"); echo "预览取图: $SZ" | tee -a "$OUT"
+case "$SZ" in "200 image/"*) N=${SZ##* }; if [ "$N" -gt 1000 ]; then log "PASS: 图片字节数正常 ($N bytes)"; else log "FAIL: 图片字节数异常 ($N bytes)"; exit 1; fi;; *) log "FAIL: 取图响应异常 $SZ"; exit 1;; esac
 log "篡改签名（预期 HTTP 403）:"
-curl -s -o /dev/null -w "HTTP=%{http_code}\n" "$BASE${URL1}bad" | tee -a "$OUT"
+curl -s -o /dev/null -w "HTTP=%{http_code}\n" "${URL1}bad" | tee -a "$OUT"
 
 log ""
 log "== 6. POST /api/sessions/$SESS_ID/entries Done 批量落库 =="
@@ -102,10 +104,10 @@ sql "SELECT id,session_id,subject_id,type,LEFT(content,20) AS content,round,next
 EXPECT_DUE=$(sql "SELECT DATE(DATE(NOW() - INTERVAL 4 HOUR) + INTERVAL 1 DAY);" | tail -1)
 log "学习日+1 应为 $EXPECT_DUE（上面 next_due_at 应一致；round=0 / review_status=0）"
 sql "SELECT e.id, ei.sort_order, ei.object_key, ei.content_type, ei.original_name FROM t_entry_image ei JOIN t_entry e ON ei.entry_id=e.id WHERE e.user_id=$UID_ ORDER BY ei.sort_order;" | tee -a "$OUT"
-log "归档检查（object_key 应为 user_${UID_}/entry_*/ 形态，tmp 下应已清空）:"
-docker exec exam-mysql sh -c "echo skip" >/dev/null
-ls "D:/todo/server/data/files/user_${UID_}/tmp" 2>/dev/null | wc -l | xargs -I{} echo "tmp 剩余文件数={}（预期 0）" | tee -a "$OUT"
-ls "D:/todo/server/data/files/user_${UID_}" 2>/dev/null | tee -a "$OUT"
+log "归档检查（object_key 应为 user_${UID_}/entry_*/ 形态）:"
+echo "$UP1" | grep -o '"objectKey":"[^"]*"' | head -1 | tee -a "$OUT"
+log "tmp 键在 Done 后应已删除（预期 HTTP 404）:"
+curl -s -o /dev/null -w "HTTP=%{http_code}\n" "$URL1" | tee -a "$OUT"
 sql "SELECT id,name FROM t_tag WHERE user_id=$UID_ ORDER BY name;" | tee -a "$OUT"
 sql "SELECT COUNT(*) AS entry_tag_links FROM t_entry_tag WHERE entry_id IN (SELECT id FROM t_entry WHERE user_id=$UID_);" | tee -a "$OUT"
 

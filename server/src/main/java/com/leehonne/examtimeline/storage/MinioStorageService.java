@@ -39,6 +39,7 @@ public class MinioStorageService {
     private final MinioClient client;
     private final String bucket;
     private final int presignTtlSeconds;
+    private volatile boolean bucketEnsured;
 
     public MinioStorageService(
             @Value("${app.minio.endpoint}") String endpoint,
@@ -58,14 +59,18 @@ public class MinioStorageService {
     public record ObjectStat(String objectKey, String contentType, long sizeBytes, String originalName) {
     }
 
-    /** 启动时确保私有桶在；MinIO 没起也别拖垮应用，首次写入时会再建 */
+    /** 确保私有桶在（幂等）：启动时试一次，MinIO 晚起则首次写入时补建 */
     @PostConstruct
-    void ensureBucket() {
+    synchronized void ensureBucket() {
+        if (bucketEnsured) {
+            return;
+        }
         try {
             if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                 client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
                 log.info("MinIO 桶已创建: {}", bucket);
             }
+            bucketEnsured = true;
         } catch (Exception e) {
             log.warn("MinIO 桶检查失败（服务未就绪？首次写入时重试）: {}", e.getMessage());
         }
@@ -73,6 +78,7 @@ public class MinioStorageService {
 
     /** 写入对象（覆盖写）；originalName 记进 user metadata */
     public void put(String objectKey, byte[] content, String contentType, String originalName) {
+        ensureBucket();
         Map<String, String> meta = new HashMap<>();
         if (originalName != null && !originalName.isBlank()) {
             // 文件名按 UTF-8 字节转义存（MinIO metadata 只收 ASCII 头）

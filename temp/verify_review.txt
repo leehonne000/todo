@@ -1,0 +1,46 @@
+== 0. 等服务就绪（最多 3 分钟）==
+服务已启动（5s）
+
+== 1. 注册 + 造数据（session + 2 条文本记录）==
+PASS: 注册拿到 token
+Done: {"code":0,"message":"ok","data":[4,5]}
+entry1=4 entry2=5
+
+== 2. 到期口径：只把 entry1 拨到今天（学习日）==
+id	round	next_due_at	review_status
+4	0	2026-10-26	0
+5	0	2026-10-27	0
+GET /api/reviews/due（预期只含 entry1）:
+{"code":0,"message":"ok","data":[{"id":4,"subjectName":"数学三","type":1,"content":"泰勒公式的余项形式","tags":["极限","中值定理"],"images":[],"createdAt":"2026-10-26T10:15:50","round":0,"reviewStatus":0}]}
+
+PASS: entry1 在到期列表
+PASS: content/tags 字段齐全
+PASS: subjectName
+未带票据（预期 HTTP 401 / code=2001）:
+{"code":2001,"message":"未登录或登录已过期，请先登录","data":null}
+
+== 3. 复习完成推进一轮（entry1: round 0→1，next_due_at=记录日+2）==
+{"code":0,"message":"ok","data":{"round":1,"nextDueAt":"2026-10-28"}}
+
+PASS: round=1
+PASS: nextDueAt=2026-10-28（记录日+2）
+id	round	next_due_at	review_status
+4	1	2026-10-28	0
+
+== 4. 六轮出队（entry2: round 5→6，出队）==
+{"code":0,"message":"ok","data":{"round":6,"nextDueAt":null}}
+
+PASS: round=6 且 nextDueAt=null
+id	round	next_due_at	review_status
+5	6	NULL	1
+
+== 5. 出队后行为 ==
+再 complete entry2（预期 code=3001 不在队列）:
+{"code":3001,"message":"该记录已完成全部复习，不在队列中","data":null}
+complete 不存在的记录（预期 code=3002）:
+{"code":3002,"message":"记录不存在","data":null}
+到期列表（预期空，entry1 未到期 + entry2 已出队）:
+{"code":0,"message":"ok","data":[]}
+
+== 6. 清场 ==
+测试数据已清空。详细结果见 D:/todo/temp/verify_review.txt
