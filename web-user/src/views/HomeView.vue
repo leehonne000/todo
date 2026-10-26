@@ -12,9 +12,10 @@
       </button>
     </header>
 
-    <!-- 签到卡：点击后先播庆祝动画（今日已签 ✓），停留片刻再淡出 -->
+    <!-- 签到卡：状态未回来前不渲染（已签到就从头到尾不出现，杜绝"闪一下再消失"）；
+         点击后先播庆祝动画（今日已签 ✓），停留片刻再淡出 -->
     <Transition name="checkin-out">
-      <button v-if="!home.checkedInToday" class="checkin glass-strong"
+      <button v-if="homeReady && !home.checkedInToday" class="checkin glass-strong"
               :class="{ celebrating: justChecked }" :disabled="justChecked" @click="onCheckIn">
         <svg v-if="!justChecked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="3" /><path d="M16 2v4M8 2v4M3 10h18" />
@@ -60,6 +61,7 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const home = ref({ checkedInToday: false, todayLearned: false, dueReviewCount: 0 })
+const homeReady = ref(false) // /api/home 是否已返回：签到卡在此之前的渲染与否由它决定
 const justChecked = ref(false) // 签到庆祝动画进行中
 // 学习日口径：凌晨 4 点前仍算前一天
 const todayPretty = prettyDate(studyDate())
@@ -72,6 +74,7 @@ async function load() {
   } else {
     toast(h.reason?.message || '主界面状态加载失败')
   }
+  homeReady.value = true // 无论成败都放开渲染门闩（失败时按"未签到"展示，允许用户尝试点签到）
   if (p.status === 'fulfilled') {
     auth.setProfile(p.value)
   } else {
