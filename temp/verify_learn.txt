@@ -1,0 +1,84 @@
+== 0. 等服务就绪（最多 3 分钟）==
+服务已启动（5s）
+
+== 1. 注册（直灌验证码）==
+{"code":0,"message":"ok","data":{"token":"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzkyOTc0MTUzLCJleHAiOjE3OTM1Nzg5NTN9.2ilWhB3ktSiM2DWSwlHvIJPSsRiAWhM0CMvjLqPGWpsKVmIsRxx9Ovai0sv5KSyj","userId":1,"email":"test_learn@example.com"}}
+
+PASS: 拿到 token
+
+== 2. GET /api/subjects（预期 4 门科目）==
+{"code":0,"message":"ok","data":[{"id":1,"name":"政治","sortOrder":0},{"id":2,"name":"英语一","sortOrder":1},{"id":3,"name":"数学三","sortOrder":2},{"id":4,"name":"计算机学科专业基础综合(408)","sortOrder":3}]}
+未带票据（预期 HTTP 401 / code=2001）:
+{"code":2001,"message":"未登录或登录已过期，请先登录","data":null}
+
+== 3. POST /api/sessions 开始计时 ==
+科目不存在（预期 code=1001）:
+{"code":1001,"message":"科目不存在","data":null}
+合法科目 subjectId=2（预期 code=0 + id/startedAt）:
+{"code":0,"message":"ok","data":{"id":1,"startedAt":"2026-10-26T08:22:41"}}
+
+PASS: session id=1
+
+== 4. POST /api/sessions/1/finish 结束计时（净学习 3600 秒）==
+{"code":0,"message":"ok","data":null}
+id	subject_id	duration_seconds	has_end
+1	2	3600	1
+负数秒（预期 code=1001）:
+{"code":1001,"message":"durationSeconds 不能为负数","data":null}
+
+== 5. POST /api/uploads/images 上传两张图 ==
+{"code":0,"message":"ok","data":{"objectKey":"user_1/tmp/c2bf8868-7570-4699-80cf-8bb7fcf087c1.png","contentType":"image/png","sizeBytes":211601,"previewUrl":"/api/files/user_1/tmp/c2bf8868-7570-4699-80cf-8bb7fcf087c1.png?exp=1793017369&sig=e9e600b7283c33f8b23207323f7c25249ced313f9760df49a0df820c7da164a8"}}
+
+PASS: objectKey1=user_1/tmp/c2bf8868-7570-4699-80cf-8bb7fcf087c1.png / objectKey2=user_1/tmp/fdacc5ff-8a4f-4a22-af0c-683d4afb20c2.png
+预览 URL 取图（预期 HTTP 200 + 图片类型）:
+HTTP=200 type=image/png size=211601
+篡改签名（预期 HTTP 403）:
+HTTP=403
+
+== 6. POST /api/sessions/1/entries Done 批量落库 ==
+{"code":0,"message":"ok","data":[1,2]}
+
+
+== 7. 落库核对 ==
+id	session_id	subject_id	type	content	round	next_due_at	review_status
+1	1	2	1	政治新增考点：实践与认识的辩证关系	0	2026-10-27	0
+2	1	2	2	NULL	0	2026-10-27	0
+学习日+1 应为 2026-10-27（上面 next_due_at 应一致；round=0 / review_status=0）
+id	sort_order	object_key	content_type	original_name
+1	0	user_1/entry_1/c2bf8868-7570-4699-80cf-8bb7fcf087c1.png	image/png	Bits + Pieces__foocngohimdoacmhbjfkdldchhiipieo.png
+2	0	user_1/entry_2/fdacc5ff-8a4f-4a22-af0c-683d4afb20c2.png	image/png	Tardis__jnpaonbghmoocnkenfjigielilfmaboj.png
+归档检查（object_key 应为 user_1/entry_*/ 形态，tmp 下应已清空）:
+tmp 剩余文件数=0（预期 0）
+entry_1
+entry_2
+tmp
+id	name
+3	极限
+2	认识论
+1	马原
+entry_tag_links
+3
+
+== 8. 异常路径 ==
+文字与图片全空（预期 code=1001）:
+{"code":1001,"message":"文字与图片至少填一项","data":null}
+超 10 张图（预期 code=1001）:
+{"code":1001,"message":"每条记录最多 10 张图片","data":null}
+别人的图片键（预期 code=1001 图片不属于当前用户）:
+{"code":1001,"message":"图片不属于当前用户","data":null}
+type 非法（预期 code=1001）:
+{"code":1001,"message":"type 只能是 1（note）或 2（错题）","data":null}
+会话不存在（预期 code=3002）:
+{"code":3002,"message":"会话不存在","data":null}
+
+== 9. 标签复用 + 同图重复提交 ==
+同一张图提交两次（预期 code=1001）:
+{"code":1001,"message":"同一张图片不能提交两次","data":null}
+新 session + 复用标签「马原」（预期 t_tag 不新增行）:
+{"code":0,"message":"ok","data":[3]}
+tag_rows
+3
+（tag_rows 仍应为 3：马原/认识论/极限）
+
+== 10. 清场 ==
+测试数据已清空。详细结果见 D:/todo/temp/verify_learn.txt

@@ -9,6 +9,9 @@ __pycache__/
 node_modules/
 dist/
 
+# 部署/本地数据（数据库卷、上传图片等）
+data/
+
 # 废弃素材
 pics/_rejected/
 
