@@ -5,6 +5,7 @@ import com.leehonne.examtimeline.enums.ReviewStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EntryRepository extends JpaRepository<Entry, Long> {
@@ -24,4 +25,8 @@ public interface EntryRepository extends JpaRepository<Entry, Long> {
 
     /** 某次学习的全部记录 */
     List<Entry> findByUserIdAndSessionId(Long userId, Long sessionId);
+
+    /** 进度模块（§8.1）：区间内入库的记录，按 created_at 的学习日归桶数 note/错题 */
+    List<Entry> findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            Long userId, LocalDateTime from, LocalDateTime to);
 }

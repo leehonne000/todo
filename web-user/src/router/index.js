@@ -30,7 +30,9 @@ const routes = [
   { path: '/info/article/:id', name: 'article', component: () => import('@/views/ArticleView.vue') },
   { path: '/library', name: 'library', component: () => import('@/views/review/LibraryView.vue') },
   { path: '/entry/:id', name: 'entry', component: () => import('@/views/review/EntryDetailView.vue') },
-  { path: '/progress', name: 'progress', component: () => import('@/views/ProgressView.vue') }
+  { path: '/progress', name: 'progress', component: () => import('@/views/ProgressView.vue') },
+  // 学习趋势（统计页「连续签到」入口）：柱状/折线 × 本周/本月
+  { path: '/progress/trend', name: 'progress-trend', component: () => import('@/views/ProgressTrendView.vue') }
 ]
 
 const router = createRouter({

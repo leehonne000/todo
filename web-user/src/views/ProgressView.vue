@@ -1,9 +1,7 @@
 <template>
   <div class="page page-narrow">
-    <!-- 统计 + 晒成绩 -->
-    <TopBar title="统计">
-      <button class="share-btn" @click="onShare">晒成绩</button>
-    </TopBar>
+    <!-- 统计 -->
+    <TopBar title="统计" />
 
     <!-- 概览：2×2 大数字 -->
     <section class="overview glass">
@@ -52,7 +50,10 @@
     <section class="checkin-card glass">
       <header class="card-head">
         <h2 class="card-title">签到日历</h2>
-        <span class="streak dim">连续签到 <b class="amber num">{{ streak }}</b> 天 ›</span>
+        <!-- 连续签到=学习趋势页入口（柱状/折线 × 本周/本月） -->
+        <button class="streak dim" @click="$router.push('/progress/trend')">
+          连续签到 <b class="amber num">{{ streak }}</b> 天 ›
+        </button>
       </header>
       <div class="week">
         <div v-for="d in weekDays" :key="d.key" class="day">
@@ -159,15 +160,6 @@ function colorOf(name) {
   return PALETTE[h % PALETTE.length]
 }
 
-function onShare() {
-  const text = `【Big Tree】累计学习 ${totalCount.value} 条记录、${Math.round(totalMinutes.value / 60)} 小时，连续签到 ${streak.value} 天。Be a Tree！`
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => toast('晒成绩文案已复制')).catch(() => toast(text))
-  } else {
-    toast(text)
-  }
-}
-
 onMounted(async () => {
   try {
     // 一次拉全量（近 400 天）：概览累计 + 签到 + 各科累计都从这份算
@@ -181,18 +173,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 标题右侧晒成绩 */
-.share-btn {
-  margin-left: auto;
-  padding: 8px 20px;
-  border-radius: 999px;
-  background: rgb(var(--theme-rgb) / 0.18);
-  border: 1px solid rgb(var(--theme-rgb) / 0.45);
-  color: var(--theme-text);
-  font-size: 14px;
-  letter-spacing: 2px;
+/* 连续签到入口（进学习趋势页） */
+.streak {
+  font-size: 13px;
+  padding: 4px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
-.share-btn:hover { background: rgb(var(--theme-rgb) / 0.3); }
+.streak:hover { color: var(--theme-text); }
+.streak b { font-size: 15px; font-weight: 500; }
 
 /* 概览 2×2 */
 .overview {
@@ -240,8 +230,6 @@ onMounted(async () => {
   justify-content: space-between;
 }
 .card-title { font-size: 16px; font-weight: 500; letter-spacing: 2px; }
-.streak { font-size: 13px; }
-.streak b { font-size: 15px; font-weight: 500; }
 
 .week {
   margin-top: 18px;
