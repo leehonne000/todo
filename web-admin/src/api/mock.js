@@ -114,6 +114,25 @@ function saveDb() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(db)) } catch { /* 存储满就算了 */ }
 }
 
+// 跨端票据登录（2026-10-27 方案 A）：把用户端带过来的票据身份登记进 mock 会话表
+// （token→userId），让 mock 鉴权（currentUser）能认这个身份；库里没有该用户则补一行。
+export function mockAdoptSession({ token, userId, email, role }) {
+  if (!token || !userId) return
+  const d = loadDb()
+  d.tokens[token] = userId
+  if (!d.users.find(u => u.id === userId)) {
+    d.users.push({
+      id: userId,
+      email: email || `user${userId}@bigtree.com`,
+      nickname: (email && email.split('@')[0]) || `用户${userId}`,
+      role: role ?? 0,
+      examYear: 2027,
+      createdAt: now()
+    })
+  }
+  saveDb()
+}
+
 // ---------- 鉴权辅助 ----------
 function currentUser(headers = {}) {
   const auth = headers.Authorization || headers.authorization || ''

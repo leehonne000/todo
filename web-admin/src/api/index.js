@@ -4,6 +4,8 @@ import { get, post, put, del, uploadImage } from './client'
 
 // ---- §3 认证（共用邮箱+密码，一个账号走遍三界面）----
 export const login = (email, password) => post('/api/auth/login', { email, password })
+// §3.5 用户资料——跨端票据登录时用票据换服务端校验（核验 token 有效性与最新角色）
+export const getProfile = () => get('/api/profile')
 
 // ---- §5.5 上传（文章封面）----
 export { uploadImage }

@@ -305,8 +305,14 @@ async function onAvatarFile(e) {
 }
 
 function onAdmin() {
-  // 管理后台独立工程：开发期 5174，上线同域 /admin/
-  location.href = import.meta.env.DEV ? 'http://localhost:5174/' : '/admin/'
+  // 方案 A（2026-10-27，修"同浏览器登两个账号进后台串号"）：票据带身份——
+  // 跳后台时把当前登录票据（token+身份）经 URL hash 带过去（hash 不进服务器日志），
+  // 后台落地即用"当前这个账号"换开门，不再读目标端残留的旧会话。
+  const base = import.meta.env.DEV ? 'http://localhost:5174/' : '/admin/'
+  const ticket = encodeURIComponent(JSON.stringify({
+    token: auth.token, userId: auth.userId, email: auth.email, role: auth.role
+  }))
+  location.href = `${base}#ticket=${ticket}`
 }
 
 function onLogout() {
