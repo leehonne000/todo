@@ -2,6 +2,7 @@
 // 原理：把主题色写进 :root 的 CSS 变量，各组件只认变量不认死色值
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { readPref, writePref } from '@/utils/prefs'
 
 const KEY = 'exam-timeline-theme'
 
@@ -78,7 +79,7 @@ function applyToRoot(main, deep) {
 
 export const useThemeStore = defineStore('theme', () => {
   let saved = null
-  try { saved = JSON.parse(localStorage.getItem(KEY)) } catch { /* 用默认 */ }
+  try { saved = JSON.parse(readPref(KEY)) } catch { /* 用默认 */ }
 
   const main = ref(saved?.main || DEFAULT.main)
   const deep = ref(saved?.deep || DEFAULT.deep)
@@ -96,7 +97,7 @@ export const useThemeStore = defineStore('theme', () => {
     main.value = mainHex.toLowerCase()
     deep.value = (deepHex || deriveDeep(mainHex)).toLowerCase()
     applyToRoot(main.value, deep.value)
-    localStorage.setItem(KEY, JSON.stringify({ main: main.value, deep: deep.value }))
+    writePref(KEY, JSON.stringify({ updatedAt: Date.now(), main: main.value, deep: deep.value }))
   }
 
   function resetDefault() {

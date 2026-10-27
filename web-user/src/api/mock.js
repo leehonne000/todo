@@ -641,6 +641,29 @@ const needAuth = (path) => !path.startsWith('/api/auth/')
  * 模拟一次 HTTP 请求
  * @returns {Promise<{code:number,message:string,data:any}>}
  */
+/**
+ * 跨端票据登记（2026-10-27 方案 A 反向：管理后台「回到用户端」）：
+ * 把票据身份登记进 mock 会话表，随后带该 token 的请求即可通行（与 web-admin mock 对称）。
+ */
+export function mockAdoptSession({ token, userId, email, role }) {
+  if (!token || !userId) return
+  const d = loadDb()
+  d.tokens[token] = userId
+  if (!d.users.find(u => u.id === userId)) {
+    d.users.push({
+      id: userId,
+      email: email || `user${userId}@bigtree.com`,
+      password: '',
+      examYear: 2027,
+      role: role ?? 0,
+      nickname: (email && email.split('@')[0]) || `用户${userId}`,
+      avatarUrl: '/avatar-default.png',
+      subjects: []
+    })
+  }
+  saveDb()
+}
+
 export function mockRequest(method, path, body = null, query = {}, headers = {}) {
   return new Promise((resolve) => {
     setTimeout(() => {

@@ -1,7 +1,8 @@
-// 壁纸自定义：分类随机换壁纸 + 交叉过渡 + localStorage 记忆 + 每日更新开关 + 画面调节 + 动效强度
+// 壁纸自定义：分类随机换壁纸 + 交叉过渡 + cookie 记忆（跨端口共享）+ 每日更新开关 + 画面调节 + 动效强度
 import { defineStore } from 'pinia'
 import { ref, shallowRef, computed, watch } from 'vue'
 import { dateStr } from '@/utils/format'
+import { readPref, writePref } from '@/utils/prefs'
 
 const KEY = 'exam-timeline-wallpaper'
 const DEFAULT = { src: '/wallpaper.png', category: null, fileName: 'Out on a Limb' }
@@ -11,7 +12,7 @@ export const DEFAULT_MOTION = 50
 /** 当前壁纸（两层交叉过渡用） */
 export const useWallpaperStore = defineStore('wallpaper', () => {
   let saved = null
-  try { saved = JSON.parse(localStorage.getItem(KEY)) } catch { /* 坏数据用默认 */ }
+  try { saved = JSON.parse(readPref(KEY)) } catch { /* 坏数据用默认 */ }
 
   // current 正在显示，incoming 淡入中；两层轮换实现无闪烁交叉过渡
   const current = ref(saved?.src || DEFAULT.src)
@@ -37,7 +38,8 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
   )
 
   function persist() {
-    localStorage.setItem(KEY, JSON.stringify({
+    writePref(KEY, JSON.stringify({
+      updatedAt: Date.now(), // 跨端仲裁依据：不一致时取较新的一方（prefs.js）
       src: current.value,
       category: category.value,
       fileName: fileName.value,

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getProfile } from './api'
 import { USE_MOCK } from './api/client'
 import { mockAdoptSession } from './api/mock'
+import { writePref } from '@/utils/prefs'
 import './styles/base.css'
 
 const app = createApp(App)
@@ -26,6 +27,10 @@ async function consumeTicket() {
   history.replaceState(null, '', location.pathname + location.search) // 抹掉票据痕迹
   if (!identity?.token) return
 
+  // 壁纸/主题随票据落地（2026-10-27 二次修复）：覆盖写两端存储，时间戳置为当下必赢仲裁，
+  // 不依赖 cookie 共享——App 挂载前写好，store 初始化即读到跳转前的状态
+  applyPrefs(identity.prefs)
+
   const auth = useAuthStore()
   if (USE_MOCK) {
     // mock 鉴权靠会话表登记：把票据身份登记进去即可通行
@@ -45,6 +50,19 @@ async function consumeTicket() {
   } catch {
     auth.logout()
     location.href = '/login'
+  }
+}
+
+/**
+ * 落地票据携带的壁纸/主题偏好：覆盖写 cookie+localStorage，updatedAt 置为当下（必赢仲裁）。
+ * 跳转前的现场状态直接随票据过来，不依赖两端 cookie 是否共享成功。
+ */
+function applyPrefs(prefs) {
+  if (!prefs) return
+  const now = Date.now()
+  for (const [key, val] of [['exam-timeline-wallpaper', prefs.wallpaper], ['exam-timeline-theme', prefs.theme]]) {
+    if (!val || typeof val !== 'object') continue
+    try { writePref(key, JSON.stringify({ ...val, updatedAt: now })) } catch { /* 忽略 */ }
   }
 }
 

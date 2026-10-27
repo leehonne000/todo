@@ -18,22 +18,14 @@
       </nav>
 
       <div class="side-foot">
-        <!-- 主题色快切（与 web-user「自定义」同款 7 预设 + 默认白） -->
-        <div class="theme-row">
-          <button
-            v-for="p in swatches" :key="p.name"
-            class="theme-dot" :class="{ on: isCurrent(p) }"
-            :style="{ background: p.main }"
-            :title="p.name"
-            @click="setTheme(p.main, p.deep)"
-          ></button>
+        <!-- 左下角仅展示当前账号信息（入口已移到导航尾部「个性化」项，2026-10-27 用户改版） -->
+        <div class="me">
+          <img class="me-avatar" :src="avatarUrl" alt="头像" />
+          <div class="who">
+            <div class="who-email" :title="auth.email">{{ auth.email }}</div>
+            <div class="who-role">{{ auth.isSuperAdmin ? '超级管理员' : '管理员' }}</div>
+          </div>
         </div>
-
-        <div class="who">
-          <div class="who-email" :title="auth.email">{{ auth.email }}</div>
-          <div class="who-role">{{ auth.isSuperAdmin ? '超级管理员' : '管理员' }}</div>
-        </div>
-        <button class="btn-glass logout" type="button" @click="onLogout">退出登录</button>
       </div>
     </aside>
 
@@ -44,24 +36,20 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useThemeStore, PRESETS } from '@/stores/theme'
-import { toast } from '@/utils/toast'
+import { getProfile } from '@/api'
 
-const router = useRouter()
 const auth = useAuthStore()
-const theme = useThemeStore()
 
-const DEFAULT = { name: '默认白', main: '#ffffff', deep: '#bfbfbf' }
-const swatches = [DEFAULT, ...PRESETS]
-
-function isCurrent(p) {
-  return theme.main.toLowerCase() === p.main.toLowerCase()
-}
-function setTheme(main, deep) {
-  theme.setTheme(main, deep)
-}
+// 左下角头像展示（拉不到资料就用系统默认头像）
+const avatarUrl = ref('/avatar-default.png')
+onMounted(async () => {
+  try {
+    const p = await getProfile()
+    if (p?.avatarUrl) avatarUrl.value = p.avatarUrl
+  } catch { /* 静默回退默认头像 */ }
+})
 
 // 导航按角色裁剪（2026-10-27 三级权限）：用户任免与硬节点维护仅超管
 const allNavItems = [
@@ -78,13 +66,12 @@ const allNavItems = [
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2.5"/></svg>'
   }
 ]
-const navItems = allNavItems.filter(i => !i.superOnly || auth.isSuperAdmin)
-
-function onLogout() {
-  auth.logout()
-  toast('已退出登录')
-  router.replace('/login')
+// 「个性化」固定显示且排在该账号可见的全部管理项之后（2026-10-27 用户指定）
+const personalItem = {
+  to: '/personal', label: '个性化',
+  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.98 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.98a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09c0 .68.4 1.29 1.03 1.56a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9c.27.63.88 1.03 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03z"/></svg>'
 }
+const navItems = [...allNavItems.filter(i => !i.superOnly || auth.isSuperAdmin), personalItem]
 </script>
 
 <style scoped>
@@ -144,26 +131,29 @@ function onLogout() {
 .nav-icon { display: flex; }
 .nav-icon :deep(svg) { width: 19px; height: 19px; }
 
-/* ---------- 底部：主题色 + 账号 ---------- */
+/* ---------- 底部：当前账号信息展示 ---------- */
 .side-foot {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 16px;
+  padding-top: 14px;
+}
+.me {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 13px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px;
+  border-radius: 13px;
 }
-.theme-row { display: flex; flex-wrap: wrap; gap: 9px; }
-.theme-dot {
-  width: 20px;
-  height: 20px;
+.me-avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  transition: transform 0.12s, border-color 0.15s;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex: none;
 }
-.theme-dot:hover { transform: scale(1.15); }
-.theme-dot.on { border-color: var(--theme-text); transform: scale(1.15); }
 
-.who { min-width: 0; }
+.who { min-width: 0; text-align: left; }
 .who-email {
   font-size: 13px;
   color: var(--text);
@@ -176,12 +166,6 @@ function onLogout() {
   font-size: 11px;
   letter-spacing: 1px;
   color: var(--theme-text);
-}
-.logout {
-  width: 100%;
-  padding: 10px;
-  font-size: 13px;
-  letter-spacing: 2px;
 }
 
 /* ---------- 右侧内容区 ---------- */

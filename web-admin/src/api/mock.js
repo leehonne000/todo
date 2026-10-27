@@ -233,6 +233,20 @@ const routes = {
     return ok({ token, userId: u.id, email: u.email, role: u.role })
   },
 
+  // ---- §3.5 用户资料（左下角头像/个性化面板展示用）----
+  'GET /api/profile': (ctx) => {
+    const u = ctx.user
+    if (!u) return fail(2001, '未登录')
+    return ok({
+      userId: u.id,
+      email: u.email,
+      nickname: u.nickname || (u.email || '').split('@')[0],
+      role: u.role,
+      avatarUrl: u.avatarUrl || '/avatar-default.png',
+      examYear: u.examYear || null
+    })
+  },
+
   // ---- §5.5 上传（文章封面）----
   'POST /api/uploads/images': (ctx) => {
     const file = ctx.body.file

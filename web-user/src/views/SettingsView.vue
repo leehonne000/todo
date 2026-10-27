@@ -190,6 +190,7 @@ import { useWallpaperStore, loadManifest, randomFromCategory } from '@/stores/wa
 import { useThemeStore, PRESETS } from '@/stores/theme'
 import { getProfile, updateProfile, uploadImage } from '@/api'
 import { toast } from '@/utils/toast'
+import { readPref } from '@/utils/prefs'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -310,9 +311,19 @@ function onAdmin() {
   // 后台落地即用"当前这个账号"换开门，不再读目标端残留的旧会话。
   const base = import.meta.env.DEV ? 'http://localhost:5174/' : '/admin/'
   const ticket = encodeURIComponent(JSON.stringify({
-    token: auth.token, userId: auth.userId, email: auth.email, role: auth.role
+    token: auth.token, userId: auth.userId, email: auth.email, role: auth.role,
+    // 壁纸/主题随票据带过去（2026-10-27 二次修复）：不依赖 cookie 共享，落地即覆盖，
+    // 彻底消除"跳到另一端壁纸变了"（cookie 竞态 / localhost 与 127.0.0.1 不同域都会导致不同步）
+    prefs: {
+      wallpaper: tryParse(readPref('exam-timeline-wallpaper')),
+      theme: tryParse(readPref('exam-timeline-theme'))
+    }
   }))
   location.href = `${base}#ticket=${ticket}`
+}
+
+function tryParse(raw) {
+  try { return JSON.parse(raw) } catch { return null }
 }
 
 function onLogout() {

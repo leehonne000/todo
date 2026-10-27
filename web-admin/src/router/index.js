@@ -8,7 +8,8 @@ const routes = [
   { path: '/articles/new', name: 'article-new', component: () => import('@/views/ArticleEditView.vue') },
   { path: '/articles/:id/edit', name: 'article-edit', component: () => import('@/views/ArticleEditView.vue') },
   { path: '/users', name: 'users', component: () => import('@/views/UsersView.vue'), meta: { superOnly: true } },
-  { path: '/milestones', name: 'milestones', component: () => import('@/views/MilestonesView.vue'), meta: { superOnly: true } }
+  { path: '/milestones', name: 'milestones', component: () => import('@/views/MilestonesView.vue'), meta: { superOnly: true } },
+  { path: '/personal', name: 'personal', component: () => import('@/views/PersonalView.vue') }
 ]
 
 const router = createRouter({
