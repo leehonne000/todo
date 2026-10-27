@@ -1,6 +1,6 @@
 <template>
   <div class="page page-narrow">
-    <TopBar title="文章" />
+    <TopBar title="文章" back-to="/info" />
 
     <article v-if="article" class="article glass">
       <h1 class="title">{{ article.title }}</h1>

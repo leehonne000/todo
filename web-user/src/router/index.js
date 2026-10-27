@@ -24,6 +24,8 @@ const routes = [
 
   // Review 沉浸式复习
   { path: '/review/due', name: 'review-due', component: () => import('@/views/review/DueView.vue') },
+  // 沉浸刷题（自由库当前筛选的全部内容逐条播放，只读不动复习状态）
+  { path: '/review/play', name: 'review-play', component: () => import('@/views/review/PlayView.vue') },
 
   // 三大模块
   { path: '/info', name: 'info', component: () => import('@/views/InfoView.vue') },

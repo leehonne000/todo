@@ -21,16 +21,27 @@
       <span class="dim num">{{ page }} / {{ Math.ceil(total / size) }}</span>
       <button class="btn-glass" :disabled="page >= Math.ceil(total / size)" @click="changePage(page + 1)">下一页</button>
     </div>
+
+    <!-- 沉浸刷题：悬浮球，对当前筛选的全部内容逐条播放（不占版面、不动复习状态） -->
+    <button class="play-fab" @click="goPlay">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36" /><polyline points="21 3 21 9 15 9" />
+      </svg>
+      <span>沉浸刷题</span>
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import TopBar from '@/components/TopBar.vue'
 import TabRow from '@/components/TabRow.vue'
 import EntryRow from '@/components/EntryRow.vue'
 import { getSubjects, getEntries } from '@/api'
 import { toast } from '@/utils/toast'
+
+const router = useRouter()
 
 const TYPE_TABS = [
   { value: null, label: '全部' },
@@ -73,6 +84,15 @@ function setSubject(id) { subjectId.value = id; page.value = 1; load() }
 function setType(t) { type.value = t; page.value = 1; load() }
 function changePage(p) { page.value = p; load() }
 
+// 沉浸刷题：把当前筛选（科目/类型）的全部内容逐条播放
+function goPlay() {
+  if (!total.value) return toast('这个筛选下还没有记录')
+  const q = {}
+  if (subjectId.value != null) q.subjectId = subjectId.value
+  if (type.value != null) q.type = type.value
+  router.push({ path: '/review/play', query: q })
+}
+
 onMounted(async () => {
   try {
     subjects.value = await getSubjects()
@@ -102,4 +122,27 @@ onMounted(async () => {
   font-size: 13px;
 }
 .pager .btn-glass { padding: 8px 18px; font-size: 13px; }
+
+/* 沉浸刷题悬浮球：fixed 悬浮，不影响下方内容 */
+.play-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 26px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--theme-text);
+  font-size: 14px;
+  letter-spacing: 2px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+.play-fab:hover { background: rgb(var(--theme-rgb) / 0.22); transform: translateY(-2px); }
+.play-fab svg { width: 18px; height: 18px; }
 </style>
