@@ -77,7 +77,7 @@
       >
         <div class="a-main">
           <h3 class="a-title">{{ a.title }}</h3>
-          <p class="a-date dim num">{{ (a.publishedAt || '').replace('T', ' ').slice(0, 10) }}</p>
+          <p class="a-date dim num">{{ (a.publishedAt || '').replace('T', ' ').slice(0, 10) }}<span v-if="a.authorName" class="a-author"> · {{ a.authorName }}</span></p>
         </div>
         <img v-if="a.coverUrl" class="a-cover" :src="a.coverUrl" alt="" />
       </article>
@@ -365,6 +365,7 @@ onMounted(async () => {
 .a-main { flex: 1; min-width: 0; }
 .a-title { font-size: 15.5px; font-weight: 500; line-height: 1.55; }
 .a-date { margin-top: 7px; font-size: 12px; }
+.a-author { color: var(--theme-text); }
 .a-cover {
   width: 78px; height: 58px;
   object-fit: cover;

@@ -18,5 +18,15 @@ pics/_rejected/
 
 .env
 
+# 本地账号凭据（密码等敏感信息，禁止入库）
+secrets/
+
+# temp/ 运行产物（验证脚本中间输出/日志/测试图片/断言脚本；verify_*.sh 与 demo 仍入库）
+temp/*.json
+temp/*.log
+temp/*.png
+temp/*.jpg
+temp/*_codes.txt
+temp/verify_*_assert.py
 
 .idea

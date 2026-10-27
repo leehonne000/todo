@@ -4,7 +4,7 @@
 
     <article v-if="article" class="article glass">
       <h1 class="title">{{ article.title }}</h1>
-      <p class="date dim num">{{ (article.publishedAt || '').replace('T', ' ').slice(0, 10) }}</p>
+      <p class="date dim num">{{ (article.publishedAt || '').replace('T', ' ').slice(0, 10) }}<span v-if="article.authorName" class="author"> · {{ article.authorName }}</span></p>
       <img v-if="article.coverUrl" class="cover" :src="article.coverUrl" alt="" />
       <div class="content">{{ article.content }}</div>
     </article>
@@ -35,6 +35,7 @@ onMounted(async () => {
 .article { width: 100%; padding: 28px 30px; }
 .title { font-size: 22px; font-weight: 500; line-height: 1.5; letter-spacing: 1px; }
 .date { margin: 10px 0 18px; font-size: 12.5px; }
+.author { color: var(--theme-text); }
 .cover {
   width: 100%;
   max-height: 280px;

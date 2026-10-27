@@ -33,7 +33,7 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
-    /** 角色：0=普通用户 1=超级管理员（管理信息模块博客，§5.1） */
+    /** 角色：0=普通用户 1=管理员 2=超级管理员（2026-10-27 三级制） */
     @Convert(converter = UserRoleConverter.class)
     @Column(nullable = false)
     private UserRole role = UserRole.USER;

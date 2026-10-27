@@ -57,7 +57,7 @@ public class ProfileService {
     }
 
     private ProfileResponse toResponse(User u) {
-        return new ProfileResponse(u.getId(), u.getEmail(), u.getNickname(), avatarUrl(u), u.getExamYear());
+        return new ProfileResponse(u.getId(), u.getEmail(), u.getNickname(), u.getRole().getCode(), avatarUrl(u), u.getExamYear());
     }
 
     /** 头像地址：空 → 默认图；/ 或 http 开头（静态资源）原样；否则对象键 → 预签名 */

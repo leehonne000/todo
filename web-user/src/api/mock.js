@@ -5,7 +5,7 @@
 // ============================================================
 import { dateStr, addDaysStr, studyDate, parseDate } from '@/utils/format'
 
-const STORE_KEY = 'exam-timeline-mock-db-v15' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
+const STORE_KEY = 'exam-timeline-mock-db-v16' // 版本号一升，旧数据作废、下次打开自动重种（重置演示数据就升这里）
 const DEMO_CODE = '123456'
 
 // ---------- 工具 ----------
@@ -124,6 +124,14 @@ function seed() {
         nickname: 'demo',
         avatarUrl: '/avatar-default.png',
         subjects
+      },
+      {
+        // 演示超管（2026-10-27 三级角色）：登录后设置页出现「进入管理后台」入口
+        id: 7, email: 'admin@bigtree.com', password: import.meta.env?.VITE_SUPER_ADMIN_PASSWORD || 'admin123456',
+        examYear: 2027, role: 2,
+        nickname: '园丁',
+        avatarUrl: '/avatar-default.png',
+        subjects: subjects.map(s => ({ ...s, userId: 7 }))
       }
     ],
     tokens: {},
@@ -137,31 +145,31 @@ function seed() {
     entries,
     nextSessionId: histId + 10,
     nextEntryId: eid,
-    nextUserId: 7,
+    nextUserId: 8,
     articles: [
       {
-        id: 1,
+        id: 1, authorName: '园丁',
         title: '2027 考研预报名已开启，这些材料提前备好',
         content: '预报名一般面向应届生，往届生也可参加。请提前准备：身份证、学历学籍信息、户籍与档案所在地、报考点选择。\n\n注意三点：\n1. 报名号生成后牢记，网上确认时要用；\n2. 报考点名额有限，热门城市可能满员，尽量早报；\n3. 生成报名号但未缴费视为报名无效。\n\n正式报名期间可修改部分信息，但报考单位、考试方式等关键项不能改，只能重报。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-4)}T10:00:00`, updatedAt: `${d(-4)}T10:00:00`
       },
       {
-        id: 2,
+        id: 2, authorName: '小笔',
         title: '冲刺期每日时间表参考（供参考，别硬抄）',
         content: '很多同学问“一天学多久才够”。答案是：比昨天多一点就够。\n\n一个可执行的骨架：\n· 上午 3h：数学/专业课硬骨头（脑子最清醒）\n· 下午 2.5h：英语阅读/翻译或专业课\n· 晚上 2h：政治选择/错题复盘\n· 睡前 0.5h：翻今天记的 note（正好走一遍艾宾浩斯）\n\n关键是“开始”而不是“完美”。状态差的时候先做 25 分钟试试。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-8)}T20:00:00`, updatedAt: `${d(-8)}T20:00:00`
       },
       {
-        id: 3,
+        id: 3, authorName: '园丁',
         title: '关于心态：焦虑是正常的',
         content: '考研是场持久战。你不是一个人在焦虑。\n\n几个小建议：\n· 和昨天的自己比，不和别人比；\n· 累了就休息，休息不是犯罪；\n· 记录（比如用 Big Tree 记 note/错题）本身就是一种整理焦虑的方式。\n\n祝顺利。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-15)}T09:00:00`, updatedAt: `${d(-15)}T09:00:00`
       },
       {
-        id: 4,
+        id: 4, authorName: '小笔',
         title: '（草稿）12 月准考证打印提醒',
         content: '这是一篇草稿，普通用户看不到。',
         coverObjectKey: null, coverUrl: null,
@@ -293,7 +301,7 @@ const routes = {
     const token = `mock-token-${u.id}-${uid()}`
     d.tokens[token] = u.id
     saveDb()
-    return ok({ token, userId: u.id, email: u.email })
+    return ok({ token, userId: u.id, email: u.email, role: u.role ?? 0 })
   },
 
   'POST /api/auth/reset-password': (ctx) => {
@@ -608,7 +616,7 @@ const routes = {
     const size = Math.min(50, Number(q.size) || 10)
     return ok({
       items: list.slice((page - 1) * size, page * size).map(a => ({
-        id: a.id, title: a.title, coverUrl: a.coverUrl, publishedAt: a.publishedAt
+        id: a.id, title: a.title, authorName: a.authorName || '未知', coverUrl: a.coverUrl, publishedAt: a.publishedAt
       })),
       total: list.length, page, size
     })
@@ -618,7 +626,7 @@ const routes = {
     const d = loadDb()
     const a = d.articles.find(x => x.id === Number(ctx.params.id))
     if (!a || a.status !== 1) return fail(3002, '文章不存在或未发布')
-    return ok({ id: a.id, title: a.title, content: a.content, coverUrl: a.coverUrl, publishedAt: a.publishedAt })
+    return ok({ id: a.id, title: a.title, authorName: a.authorName || '未知', content: a.content, coverUrl: a.coverUrl, publishedAt: a.publishedAt })
   }
 }
 

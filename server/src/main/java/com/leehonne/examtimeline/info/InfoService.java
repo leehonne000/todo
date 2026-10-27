@@ -68,7 +68,8 @@ public class InfoService {
 
         List<ArticleListItemResponse> items = new ArrayList<>();
         for (Article a : slice) {
-            items.add(new ArticleListItemResponse(a.getId(), a.getTitle(), coverUrl(a), a.getPublishedAt()));
+            items.add(new ArticleListItemResponse(a.getId(), a.getTitle(), authorName(a.getAuthorId()),
+                    coverUrl(a), a.getPublishedAt()));
         }
         return new ArticleListResponse(items, all.size(), p, s);
     }
@@ -78,10 +79,20 @@ public class InfoService {
         Article a = articleRepository.findById(articleId)
                 .filter(x -> x.getStatus() == ArticleStatus.PUBLISHED)
                 .orElseThrow(() -> BizException.notFound("文章不存在或未发布"));
-        return new ArticleDetailResponse(a.getId(), a.getTitle(), a.getContent(), coverUrl(a), a.getPublishedAt());
+        return new ArticleDetailResponse(a.getId(), a.getTitle(), authorName(a.getAuthorId()),
+                a.getContent(), coverUrl(a), a.getPublishedAt());
     }
 
     // ---- 组装 ----
+
+    /** 作者显示名：昵称优先，缺省回退邮箱 @ 前缀（与 §3.5 注册默认昵称口径一致） */
+    private String authorName(Long authorId) {
+        return userRepository.findById(authorId)
+                .map(u -> u.getNickname() != null && !u.getNickname().isBlank()
+                        ? u.getNickname()
+                        : u.getEmail().substring(0, u.getEmail().indexOf('@')))
+                .orElse("未知");
+    }
 
     private MilestoneResponse toMilestone(ExamMilestone m) {
         return new MilestoneResponse(m.getName(), m.getDateFrom(), m.getDateTo(), m.getSortOrder());

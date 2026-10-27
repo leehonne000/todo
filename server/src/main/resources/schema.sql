@@ -21,7 +21,7 @@ CREATE TABLE t_user (
   email         VARCHAR(64)     NOT NULL COMMENT '登录标识：注册/登录/找回密码都用它',
   password_hash VARCHAR(100)    NOT NULL COMMENT 'BCrypt 密码哈希，不存明文',
   email_verified TINYINT        NOT NULL DEFAULT 0 COMMENT '邮箱激活标志：0=未激活(禁登录) 1=已激活',
-  role          TINYINT         NOT NULL DEFAULT 0 COMMENT '角色：0=普通用户 1=超级管理员（管理信息模块博客，2026-10-24）',
+  role          TINYINT         NOT NULL DEFAULT 0 COMMENT '角色：0=普通用户 1=管理员 2=超级管理员（2026-10-27 三级制，超管=部署者指定）',
   phone         VARCHAR(20)              DEFAULT NULL COMMENT '手机号（预留，v1 不做短信验证）',
   exam_year     SMALLINT        NOT NULL COMMENT '考研届数（如 2027）：倒计时/时间线取数据的依据',
   created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
@@ -183,7 +183,7 @@ CREATE TABLE t_exam_milestone (
 -- ------------------------------------------------------------
 CREATE TABLE t_article (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  author_id       BIGINT UNSIGNED NOT NULL COMMENT '作者=超级管理员（t_user.role=1，应用层校验）',
+  author_id       BIGINT UNSIGNED NOT NULL COMMENT '作者（管理员/超管的 t_user.id）；仅作者本人或超管可操作（2026-10-27 归属权）',
   title           VARCHAR(120)    NOT NULL COMMENT '文章标题（列表页展示）',
   content         TEXT            NOT NULL COMMENT '正文（v1 纯文本/Markdown 原文）',
   cover_object_key VARCHAR(255)            DEFAULT NULL COMMENT '封面图 MinIO 对象键（可选，复用图片链路）',

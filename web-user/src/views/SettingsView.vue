@@ -169,6 +169,10 @@
               <span class="dim">邮箱</span>
               <span>{{ auth.email }}</span>
             </div>
+            <!-- 超级管理员专属：PC 管理后台入口（§11.2 权限叠加，一个账号走遍三界面） -->
+            <button v-if="auth.isAdmin" class="btn-glass logout" @click="onAdmin">
+              进入管理后台（PC）
+            </button>
             <button class="btn-glass logout" @click="onLogout">退出登录</button>
           </div>
         </transition>
@@ -298,6 +302,11 @@ async function onAvatarFile(e) {
   } catch (err) {
     toast(err.message)
   }
+}
+
+function onAdmin() {
+  // 管理后台独立工程：开发期 5174，上线同域 /admin/
+  location.href = import.meta.env.DEV ? 'http://localhost:5174/' : '/admin/'
 }
 
 function onLogout() {

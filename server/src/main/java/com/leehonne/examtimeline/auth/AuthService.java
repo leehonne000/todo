@@ -100,7 +100,7 @@ public class AuthService {
             subjectRepository.save(subject);
         }
 
-        return new LoginResponse(jwtService.issue(user.getId()), user.getId(), user.getEmail());
+        return new LoginResponse(jwtService.issue(user.getId()), user.getId(), user.getEmail(), user.getRole().getCode());
     }
 
     // ---------- 登录 ----------
@@ -116,7 +116,7 @@ public class AuthService {
         if (!user.getEmailVerified()) {
             throw BizException.forbidden("邮箱未激活，请先完成注册激活");
         }
-        return new LoginResponse(jwtService.issue(user.getId()), user.getId(), user.getEmail());
+        return new LoginResponse(jwtService.issue(user.getId()), user.getId(), user.getEmail(), user.getRole().getCode());
     }
 
     // ---------- 找回密码 ----------

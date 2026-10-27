@@ -19,6 +19,9 @@ public class ArticleListItemResponse {
 
     private String title;
 
+    /** 作者显示名（昵称，缺省邮箱 @ 前缀）——2026-10-27 info 界面标识作者 */
+    private String authorName;
+
     /** 封面预签名 URL，无封面为 null */
     private String coverUrl;
 

@@ -19,6 +19,9 @@ public class ArticleDetailResponse {
 
     private String title;
 
+    /** 作者显示名（昵称，缺省邮箱 @ 前缀） */
+    private String authorName;
+
     /** 正文（纯文本/Markdown 原文） */
     private String content;
 

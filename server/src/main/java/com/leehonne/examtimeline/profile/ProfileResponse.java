@@ -21,6 +21,9 @@ public class ProfileResponse {
 
     private String nickname;
 
+    /** 角色：0=普通用户 1=超级管理员（2026-10-27 增补，管理后台入口门禁用） */
+    private Integer role;
+
     /** 可直接渲染的地址：默认 /avatar-default.png；对象键则为预签名 URL */
     private String avatarUrl;
 
