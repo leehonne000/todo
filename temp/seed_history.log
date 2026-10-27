@@ -1,0 +1,36 @@
+== 0. 清旧种子（id>=101），保留用户原数据 ==
+
+== 1. mint JWT（uid=3）==
+JWT 签发成功（secret=****（打码））
+
+== 2. 测试图片（6 张）==
+
+== 3. SQL：10 个 session + 11 条 entry（id>=101）+ 标签 ==
+SQL 落库完成（session 10 / entry 11 / tag 6 / link 9）
+
+== 4. 6 张图挂到记录（上传 tmp → PUT 归档，走真实链路）==
+e102 图挂好（user_3/tmp/c9526e35-380d-44c6-b9cc-99db536ed360.webp）
+e104 图挂好（user_3/tmp/2a561bc3-f25e-43bc-b774-4674b949eeed.webp）
+e105 图挂好（user_3/tmp/5573d81a-2720-43a1-868c-762cf5248d14.webp）
+e107 图挂好（user_3/tmp/ad788cd3-9aa8-4441-8890-d53d54efcf81.webp）
+e109 图挂好（user_3/tmp/9505dd15-3e5f-4afa-8533-4776b629cdec.webp）
+e111 图挂好（user_3/tmp/ceeb6ca3-518b-4b17-9f0c-61f5195875ab.webp）
+
+== 5. 核对 ==
+id	subject_id	type	round	next_due_at	review_status
+9	8	1	0	2026-10-28	0
+10	5	1	0	2026-10-28	0
+101	5	1	3	2026-10-12	0
+102	6	2	4	2026-10-15	0
+103	7	1	2	2026-10-24	0
+104	8	1	0	2026-10-27	0
+105	5	2	5	2026-10-27	0
+106	8	1	2	2026-10-29	0
+107	7	2	3	2026-10-30	0
+108	6	1	5	2026-11-11	0
+109	6	1	6	NULL	1
+110	7	1	0	2026-10-28	0
+111	6	2	0	2026-10-28	0
+到期队列 JSON：{"code":0,"message":"ok","data":[{"id":101,"subjectName":"政治","type":1,"content":"矛盾的普遍性与特殊性：普遍性寓于特殊性之中","tags":["辩证法"],"images":[],"createdAt":"2026-10-05T21:30:00","round":3,"reviewStatus":0},{"id":102,"subjectName":"数学一","type":2,"content":"定积分换元必换限：x=sinθ 时上下限同步变换","tags":[],"images":[{"objectKey":"user_3/entry_102/c9526e35-380d-44c6-b9cc-99db536ed360.webp","previewUrl":"http://localhost:9000/exam-timeline/user_3/entry_102/c9526e35-380d-44c6-b9cc-99db536ed360.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=exam-minio%2F20261027%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261027T022244Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=e639efab962dff0bce6e8bff101fd7b231550c79c1b2aa67b80053b7bdb2c692"}],"createdAt":"2026-09-30T21:00:00","round":4,"reviewStatus":0},{"id":103,"subjectName":"英语二","type":1,"content":"长难句拆分三步：找谓语→划从句→调语序","tags":["长难句"],"images":[],"createdAt":"2026-10-20T20:10:00","round":2,"reviewStatus":0},{"id":105,"subjectName":"政治","type":2,"content":"剩余价值率与利润率分母不同（m/v 与 m/(c+v)）","tags":[],"images":[{"objectKey":"user_3/entry_105/5573d81a-2720-43a1-868c-762cf5248d14.webp","previewUrl":"http://localhost:9000/exam-timeline/user_3/entry_105/5573d81a-2720-43a1-868c-762cf5248d14.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=exam-minio%2F20261027%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261027T022244Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=6c36359c4b16af751dcc265869b85cf7c0e367d2fc4d102db344d55a792d7fc1"}],"createdAt":"2026-10-05T21:45:00","round":5,"reviewStatus":0},{"id":104,"subjectName":"408","type":1,"content":"页面置换：OPT 理论最优，LRU 近似最好，FIFO 可能 Belady 异常","tags":["页面置换算法"],"images":[{"objectKey":"user_3/entry_104/2a561bc3-f25e-43bc-b774-4674b949eeed.webp","previewUrl":"http://localhost:9000/exam-timeline/user_3/entry_104/2a561bc3-f25e-43bc-b774-4674b949eeed.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=exam-minio%2F20261027%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261027T022244Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=9621d3ed94130151b986624d74f7340b9ce6348766193804ba57c1c71a9d8aa1"}],"createdAt":"2026-10-26T16:30:00","round":0,"reviewStatus":0}]}
+总记录数=13（期望 13 = 原 2 + 种子 11）
+种子完成
