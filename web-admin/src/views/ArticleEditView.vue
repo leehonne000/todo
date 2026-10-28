@@ -151,8 +151,6 @@ async function save() {
     if (isNew.value) {
       const { id: newId } = await adminCreateArticle(payload)
       toast('已存为草稿')
-      // 进入编辑态，后续保存走 PUT
-      await router.replace(`/articles/${newId}/edit`)
       return newId
     }
     await adminUpdateArticle(id.value, payload)
@@ -167,8 +165,8 @@ async function save() {
 }
 
 async function onSave() {
-  await save()
-  if (!isNew.value) load()
+  const ok = await save()
+  if (ok) router.push('/articles') // 保存后回到文章管理列表
 }
 
 async function onSavePublish() {
@@ -176,9 +174,8 @@ async function onSavePublish() {
   if (!savedId) return
   try {
     await adminPublishArticle(savedId)
-    status.value = 1
     toast('已发布，普通用户现在可见')
-    load()
+    router.push('/articles') // 发布后回到文章管理列表
   } catch (e) {
     toast(e.message)
   }
@@ -188,8 +185,8 @@ async function onUnpublish() {
   saving.value = true
   try {
     await adminUnpublishArticle(id.value)
-    status.value = 0
     toast('已下线（保留为草稿，可再次发布）')
+    router.push('/articles') // 下线后回到文章管理列表
   } catch (e) {
     toast(e.message)
   } finally {

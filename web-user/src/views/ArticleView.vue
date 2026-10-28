@@ -40,8 +40,9 @@
 
       <div class="msg-input-row">
         <textarea
-          v-model="draft" class="msg-input" rows="2" maxlength="300"
+          v-model="draft" class="msg-input" rows="1" maxlength="300"
           placeholder="给作者留言（1~300 字）"
+          @keydown.enter.exact.prevent="send"
         ></textarea>
         <button class="send-btn" type="button" :disabled="sending || !draft.trim()" @click="send">发送</button>
       </div>
@@ -176,11 +177,12 @@ onMounted(async () => {
   border-radius: 50%;
   object-fit: cover;
 }
-.bubble-wrap { max-width: 78%; display: flex; flex-direction: column; }
+.bubble-wrap { max-width: 78%; min-width: 0; display: flex; flex-direction: column; }
 .msg-row.mine .bubble-wrap { align-items: flex-end; }
 .bubble-name { font-size: 11px; margin: 0 4px 3px; opacity: 0.75; }
 .bubble {
-  max-width: 78%;
+  width: fit-content;
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 14px;
   font-size: 14px;
@@ -196,16 +198,17 @@ onMounted(async () => {
   color: var(--text);
   border-bottom-left-radius: 4px;
 }
-.bubble-text { white-space: pre-wrap; word-break: break-word; }
-.bubble-time { font-size: 10.5px; margin-top: 4px; opacity: 0.7; text-align: right; }
+.bubble-text { white-space: pre-wrap; overflow-wrap: break-word; }
+.bubble-time { font-size: 9px; margin-top: 4px; opacity: 0.7; text-align: right; white-space: nowrap; }
 
-.msg-input-row { display: flex; gap: 10px; margin-top: 16px; align-items: flex-end; }
+.msg-input-row { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
 .msg-input {
   flex: 1;
   resize: none;
-  padding: 10px 12px;
+  height: 42px;
+  padding: 10px 14px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: var(--glass-bg);

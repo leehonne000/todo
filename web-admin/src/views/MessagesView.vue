@@ -69,8 +69,9 @@
 
           <!-- 回复权=仅文章作者本人（超管可看全部但不可代回复，2026-10-28 权限定稿） -->
           <div v-if="canReply" class="pane-input">
-            <textarea v-model="draft" class="reply-input" rows="2" maxlength="300"
-                      placeholder="回复用户（仅该用户可见，1~300 字）"></textarea>
+            <textarea v-model="draft" class="reply-input" rows="1" maxlength="300"
+                      placeholder="回复用户（仅该用户可见，1~300 字）"
+                      @keydown.enter.exact.prevent="onReply"></textarea>
             <button class="btn-amber send" type="button" :disabled="busy || !draft.trim()" @click="onReply">发送</button>
           </div>
           <p v-else class="no-reply dim">这条会话发给了 {{ current.authorName }}，只有 TA 能回复（你可以查看和删除留言）</p>
@@ -358,11 +359,12 @@ onMounted(load)
   border-radius: 50%;
   object-fit: cover;
 }
-.row-body { max-width: 72%; display: flex; flex-direction: column; }
+.row-body { max-width: 72%; min-width: 0; display: flex; flex-direction: column; }
 .row.from-admin .row-body { align-items: flex-end; }
 .b-name { font-size: 11px; margin: 0 4px 3px; opacity: 0.75; }
 .bubble {
-  max-width: 72%;
+  width: fit-content;
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 14px;
   font-size: 14px;
@@ -376,7 +378,7 @@ onMounted(load)
   background: rgba(255, 255, 255, 0.12);
   border-bottom-right-radius: 4px;
 }
-.b-text { white-space: pre-wrap; word-break: break-word; }
+.b-text { white-space: pre-wrap; overflow-wrap: break-word; }
 .b-foot {
   display: flex;
   align-items: center;
@@ -384,8 +386,9 @@ onMounted(load)
   gap: 8px;
   margin-top: 4px;
 }
-.b-time { font-size: 10.5px; opacity: 0.75; }
+.b-time { font-size: 9px; opacity: 0.75; white-space: nowrap; }
 .b-del {
+  flex: none;
   border: none;
   background: transparent;
   color: inherit;
@@ -409,16 +412,17 @@ onMounted(load)
 .pane-input {
   display: flex;
   gap: 10px;
-  align-items: flex-end;
+  align-items: center;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 .reply-input {
   flex: 1;
   resize: none;
-  padding: 10px 12px;
+  height: 42px;
+  padding: 10px 14px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
