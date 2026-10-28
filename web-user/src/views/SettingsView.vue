@@ -324,7 +324,9 @@ function onAdmin() {
   // 方案 A（2026-10-27，修"同浏览器登两个账号进后台串号"）：票据带身份——
   // 跳后台时把当前登录票据（token+身份）经 URL hash 带过去（hash 不进服务器日志），
   // 后台落地即用"当前这个账号"换开门，不再读目标端残留的旧会话。
-  const base = import.meta.env.DEV ? 'http://localhost:5174/' : '/admin/'
+  // 用 location.hostname 而非写死 localhost（2026-10-28）：局域网他机（如 172.23.x.x）访问时
+  // localhost 指向访问者自己，跳转会打不开；跟随当前访问主机名则本机/局域网/线上都正确
+  const base = import.meta.env.DEV ? `http://${location.hostname}:5174/` : '/admin/'
   const ticket = encodeURIComponent(JSON.stringify({
     token: auth.token, userId: auth.userId, email: auth.email, role: auth.role,
     // 壁纸/主题随票据带过去（2026-10-27 二次修复）：不依赖 cookie 共享，落地即覆盖，

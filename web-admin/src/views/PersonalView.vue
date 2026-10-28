@@ -329,7 +329,8 @@ async function pick(name) {
 // ---------- 回到用户端（2026-10-27：管理员一定是用户）----------
 // 与 web-user「进入管理后台」对称：票票据带身份过境，用户端落地即用"当前这个账号"恢复会话
 function backToUser() {
-  const base = import.meta.env.DEV ? 'http://localhost:5173/' : '/'
+  // 跟随当前访问主机名（2026-10-28）：局域网他机访问时写死 localhost 会指向访问者自己
+  const base = import.meta.env.DEV ? `http://${location.hostname}:5173/` : '/'
   const ticket = encodeURIComponent(JSON.stringify({
     token: auth.token, userId: auth.userId, email: auth.email, role: auth.role,
     // 壁纸/主题随票据带过去（2026-10-27 二次修复）：不依赖 cookie 共享，落地即覆盖，

@@ -61,7 +61,8 @@ function fillDemo() {
 
 function toUserSite() {
   // 用户端与管理后台分工程；开发期 5173，上线同域根路径
-  location.href = import.meta.env.DEV ? 'http://localhost:5173/' : '/'
+  // 主机名跟随当前访问（2026-10-28）：写死 localhost 会让局域网他机跳到自己身上
+  location.href = import.meta.env.DEV ? `http://${location.hostname}:5173/` : '/'
 }
 
 async function onSubmit() {
