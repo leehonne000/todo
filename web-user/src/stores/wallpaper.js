@@ -37,10 +37,12 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturate.value}%)`
   )
 
-  function persist() {
+  // srcOverride：换图淡入期间 current 还没切到新图，落盘必须显式传"即将显示"的新地址，
+  // 否则存进去的是上一张（2026-10-28 修：跨端跳转读的是存储，会把旧壁纸当最新带过去）
+  function persist(srcOverride) {
     writePref(KEY, JSON.stringify({
       updatedAt: Date.now(), // 跨端仲裁依据：不一致时取较新的一方（prefs.js）
-      src: current.value,
+      src: typeof srcOverride === 'string' ? srcOverride : current.value,
       category: category.value,
       fileName: fileName.value,
       dailyUpdate: dailyUpdate.value,
@@ -50,7 +52,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     }))
   }
 
-  watch([brightness, contrast, saturate, motion], persist)
+  watch([brightness, contrast, saturate, motion], () => persist())
 
   // 预加载完成才切换，避免拉大图时闪白
   function setWallpaper(src, meta = {}) {
@@ -64,10 +66,11 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
         current.value = src
         incoming.value = ''
         fading.value = false
+        persist() // current 落定后再存一次，覆盖淡入期间（如拖滑杆）误写入的旧地址
       }, 620)
       category.value = meta.category ?? category.value
       fileName.value = meta.fileName ?? fileName.value
-      persist()
+      persist(src) // 新地址立即落盘（此刻 current 仍是旧图，不能裸调 persist）
     }
     img.src = src
   }
@@ -88,7 +91,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     if (!picked) return
     lastDaily.value = dateStr()
     setWallpaper(picked.src, { category: cat, fileName: picked.fileName })
-    persist()
+    persist(picked.src) // lastDaily 与新地址一起落盘（图加载失败也不丢"今天已换过"）
   }
 
   /** 画面调节归 100 */
