@@ -21,7 +21,7 @@ public class AdminMilestoneResponse {
     /** 届数（如 2027），与 t_user.exam_year 对齐 */
     private Integer examYear;
 
-    /** 节点名：预报名/正式报名/网上确认/准考证下载/初试/出分/国家线/复试调剂 */
+    /** 节点名：预报名/正式报名/网上确认/准考证下载/初试/出分/国家线/调剂系统开放（8 全国性节点，2026-10-28 定稿） */
     private String name;
 
     private LocalDate dateFrom;

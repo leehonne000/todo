@@ -596,8 +596,8 @@ const routes = {
       { name: '准考证下载', dateFrom: `${y}-12-14`, dateTo: `${y}-12-20`, sortOrder: 4 },
       { name: '初试', dateFrom: `${y}-12-19`, dateTo: `${y}-12-20`, sortOrder: 5 },
       { name: '出分', dateFrom: `${examYear}-02-20`, dateTo: `${examYear}-02-28`, sortOrder: 6 },
-      { name: '国家线', dateFrom: `${examYear}-03-15`, dateTo: `${examYear}-03-20`, sortOrder: 7 },
-      { name: '复试 / 调剂', dateFrom: `${examYear}-03-25`, dateTo: `${examYear}-04-30`, sortOrder: 8 }
+      { name: '国家线', dateFrom: `${examYear}-03-15`, dateTo: null, sortOrder: 7 },
+      { name: '调剂系统开放', dateFrom: `${examYear}-04-06`, dateTo: null, sortOrder: 8 }
     ]
     const first = milestones.find(m => m.name === '初试')
     const [Y, M, D] = first.dateFrom.split('-').map(Number)

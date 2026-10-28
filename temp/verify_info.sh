@@ -103,7 +103,7 @@ else:
 ms = a["milestones"]
 names = [m["name"] for m in ms]
 if len(ms) == 8 and names[0] == "预报名" and names[4] == "初试" and names == sorted(names, key=lambda n: [m for m in ms if m["name"]==n][0]["sortOrder"]):
-    ok("硬节点 8 个、sortOrder 升序（预报名…复试 / 调剂）")
+    ok("硬节点 8 个、sortOrder 升序（预报名…调剂系统开放）")
 else:
     fail(f"milestones {names}")
 chu = next(m for m in ms if m["name"] == "初试")

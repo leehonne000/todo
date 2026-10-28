@@ -20,7 +20,7 @@ public class MilestoneResponse {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFrom;
 
-    /** 跨月节点的结束日（复试/调剂）；单日节点为 null */
+    /** 跨日节点的结束日；单日节点为 null */
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateTo;
 

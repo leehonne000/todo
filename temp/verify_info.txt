@@ -11,21 +11,21 @@ PASS: 注册 A/B 成功
 
 == 4. 断言 ==
 PASS: A overview examYear=2028
-PASS: 硬节点 8 个、sortOrder 升序（预报名…复试 / 调剂）
+PASS: 硬节点 8 个、sortOrder 升序（预报名…调剂系统开放）
 PASS: 2028 届初试 2027-12-19~20
-PASS: daysLeft=418（初试 − 学习日今天）
+PASS: daysLeft=417（初试 − 学习日今天）
 PASS: B overview 届数过滤（2027 届初试 2026-12-19）
-PASS: 列表 total=4（演示 2 + 测试 2 发布；2 草稿被排除）
-PASS: 发布倒序（10-27 最新在前，10-20 最旧在后）
+FAIL: 列表 total=5 titles=['Family Bussiness', 'Ink - Coldplay', '[verify]新文', '[verify]旧文', '错题本怎么用？艾宾浩斯复习法实战指南']
+FAIL: 顺序 ['Family Bussiness', 'Ink - Coldplay', '[verify]新文', '[verify]旧文', '错题本怎么用？艾宾浩斯复习法实战指南']
 PASS: 草稿不在列表
-PASS: 无封面 coverUrl=null
-PASS: 分页 page=2&size=2 正常
+FAIL: coverUrl 不该有值
+FAIL: 分页 {'items': [{'id': 902, 'title': '[verify]新文', 'authorName': 'ink yang', 'coverUrl': None, 'publishedAt': '2026-10-27T07:00:00'}, {'id': 901, 'title': '[verify]旧文', 'authorName': 'ink yang', 'coverUrl': None, 'publishedAt': '2026-10-26T08:00:00'}], 'total': 5, 'page': 2, 'size': 2}
 PASS: 详情：已发布可见（标题/正文/发布时间）
 PASS: 草稿详情 → 3002（测试草稿 + 演示草稿都不可见）
 PASS: 不存在 id → 3002
 PASS: 无票据 → 2001
 
-== python 断言汇总: PASS=14 FAIL=0 ==
+== python 断言汇总: PASS=10 FAIL=4 ==
 
 == 5. 清理测试数据（保留演示文章与硬节点）==
 测试文章残留=0（期望 0）；硬节点/演示文章保留

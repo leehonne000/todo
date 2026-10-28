@@ -37,8 +37,8 @@ function seed() {
       ['准考证下载', `${y}-12-14`, `${y}-12-20`, 4],
       ['初试', `${y}-12-19`, `${y}-12-20`, 5],
       ['出分', `${examYear}-02-20`, `${examYear}-02-28`, 6],
-      ['国家线', `${examYear}-03-15`, `${examYear}-03-20`, 7],
-      ['复试 / 调剂', `${examYear}-03-25`, `${examYear}-04-30`, 8]
+      ['国家线', `${examYear}-03-15`, null, 7],
+      ['调剂系统开放', `${examYear}-04-06`, null, 8]
     ]
     for (const [name, dateFrom, dateTo, sortOrder] of rows) {
       milestones.push({ id: msId++, examYear, name, dateFrom, dateTo, sortOrder })

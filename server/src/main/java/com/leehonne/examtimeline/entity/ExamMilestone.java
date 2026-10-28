@@ -25,7 +25,7 @@ public class ExamMilestone {
     @Column(name = "exam_year", nullable = false)
     private Integer examYear;
 
-    /** 节点名：预报名/正式报名/网上确认/准考证下载/初试/出分/国家线/复试调剂 */
+    /** 节点名：预报名/正式报名/网上确认/准考证下载/初试/出分/国家线/调剂系统开放（8 全国性节点，2026-10-28 定稿） */
     @Column(nullable = false, length = 32)
     private String name;
 
@@ -33,7 +33,7 @@ public class ExamMilestone {
     @Column(name = "date_from", nullable = false)
     private LocalDate dateFrom;
 
-    /** 节点结束日（复试/调剂跨月用；单日节点留空） */
+    /** 节点结束日（跨日节点用；单日节点留空） */
     @Column(name = "date_to")
     private LocalDate dateTo;
 
