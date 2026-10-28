@@ -179,7 +179,7 @@ const wp = useWallpaperStore()
 const theme = useThemeStore()
 
 const categories = ref([])
-const openSection = ref('wallpaper') // 进来默认展开壁纸区
+const openSection = ref('') // 进来默认全部收起（2026-10-28 用户要求，不再默认展开壁纸区）
 const panelOpen = ref(false) // 「换一张」分类面板
 const rolling = ref(false)
 
