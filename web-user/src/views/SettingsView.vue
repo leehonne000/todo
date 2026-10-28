@@ -2,32 +2,53 @@
   <div class="page page-narrow">
     <TopBar title="自定义" />
 
-    <!-- 资料区：头像 + 昵称 + 届数（参考图布局） -->
+    <!-- 资料区：头像 + 昵称 + 届数（纯展示；修改入口=下方「修改昵称和头像」块，2026-10-28） -->
     <section class="profile">
-      <button class="avatar-wrap" title="更换头像" @click="avatarInput?.click()">
+      <div class="avatar-wrap">
         <img class="avatar" :src="auth.avatarUrl" alt="头像" />
-        <span class="avatar-mask">更换</span>
-      </button>
-      <input ref="avatarInput" type="file" accept="image/*" hidden @change="onAvatarFile" />
-
-      <!-- 昵称：点击进入编辑 -->
-      <div v-if="!renaming" class="nick-row">
-        <button class="nick" title="点击修改昵称" @click="startRename">{{ auth.nickname }}</button>
       </div>
-      <div v-else class="nick-row">
-        <input
-          ref="nickInput" v-model.trim="nickDraft" class="nick-input" maxlength="20"
-          placeholder="1~20 个字符" @keyup.enter="saveNickname" @keyup.esc="renaming = false"
-        />
-        <button class="mini-btn amber" @click="saveNickname">保存</button>
-        <button class="mini-btn" @click="renaming = false">取消</button>
+      <div class="nick-row">
+        <div class="nick">{{ auth.nickname }}</div>
       </div>
-
       <div class="year-chip">{{ profileYear }} 届考研</div>
     </section>
 
     <!-- 折叠菜单 -->
     <section class="menu">
+      <!-- 修改昵称和头像（2026-10-28：与编辑壁纸/主题色平级；顶部资料区改为纯展示） -->
+      <div class="menu-block glass">
+        <button class="menu-row" @click="toggle('profile')">
+          <svg class="m-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+          </svg>
+          <span class="m-label">修改昵称和头像</span>
+          <svg class="m-chev" :class="{ open: openSection === 'profile' }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+
+        <transition name="slide">
+          <div v-if="openSection === 'profile'" class="menu-body">
+            <!-- 头像：点击更换（自动居中裁方 + 压缩后上传） -->
+            <div class="prof-row">
+              <button class="avatar-wrap sm" title="更换头像" @click="avatarInput?.click()">
+                <img class="avatar" :src="auth.avatarUrl" alt="头像" />
+                <span class="avatar-mask">更换</span>
+              </button>
+              <input ref="avatarInput" type="file" accept="image/*" hidden @change="onAvatarFile" />
+              <div class="prof-tip dim">点击头像更换，自动裁方压缩后上传</div>
+            </div>
+
+            <!-- 昵称 -->
+            <div class="prof-row">
+              <input
+                ref="nickInput" v-model.trim="nickDraft" class="nick-input" maxlength="20"
+                placeholder="1~20 个字符" @keyup.enter="saveNickname"
+              />
+              <button class="mini-btn amber" @click="saveNickname">保存昵称</button>
+            </div>
+          </div>
+        </transition>
+      </div>
+
       <!-- 更换壁纸 -->
       <div class="menu-block glass">
         <button class="menu-row" @click="toggle('wallpaper')">
@@ -182,7 +203,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TopBar from '@/components/TopBar.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -198,12 +219,11 @@ const wp = useWallpaperStore()
 const theme = useThemeStore()
 
 const categories = ref([])
-const openSection = ref('') // '' = 全折叠；'wallpaper' | 'theme' | 'account'
+const openSection = ref('') // '' = 全折叠；'profile' | 'wallpaper' | 'theme' | 'account'
 const panelOpen = ref(false)
 const rolling = ref(false)
 
-// 昵称编辑
-const renaming = ref(false)
+// 昵称/头像修改（2026-10-28 挪进「修改昵称和头像」折叠块，顶部资料区纯展示）
 const nickDraft = ref('')
 const nickInput = ref(null)
 const avatarInput = ref(null)
@@ -211,6 +231,7 @@ const avatarInput = ref(null)
 const profileYear = computed(() => auth.profile?.examYear || '—')
 
 function toggle(name) {
+  if (name === 'profile' && openSection.value !== 'profile') nickDraft.value = auth.nickname // 每次展开回填当前昵称
   openSection.value = openSection.value === name ? '' : name
 }
 
@@ -250,12 +271,6 @@ async function pick(name) {
 }
 
 // ---------- 昵称 ----------
-function startRename() {
-  nickDraft.value = auth.nickname
-  renaming.value = true
-  nextTick(() => nickInput.value?.focus())
-}
-
 async function saveNickname() {
   const n = nickDraft.value.trim()
   if (!n) return toast('昵称不能为空')
@@ -263,7 +278,7 @@ async function saveNickname() {
   try {
     const data = await updateProfile({ nickname: n })
     auth.setProfile({ ...(auth.profile || {}), ...data })
-    renaming.value = false
+    nickDraft.value = auth.nickname
     toast('昵称已更新')
   } catch (e) {
     toast(e.message)
@@ -377,6 +392,16 @@ onMounted(async () => {
   transition: opacity 0.15s;
 }
 .avatar-wrap:hover .avatar-mask { opacity: 1; }
+
+/* 「修改昵称和头像」折叠块（2026-10-28） */
+.avatar-wrap.sm { width: 64px; height: 64px; flex: none; }
+.prof-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.prof-row + .prof-row { margin-top: 12px; }
+.prof-tip { font-size: 12.5px; }
 
 .nick-row {
   margin-top: 12px;

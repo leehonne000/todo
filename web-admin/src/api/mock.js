@@ -247,6 +247,28 @@ const routes = {
     })
   },
 
+  // §3.5 修改昵称/头像（2026-10-28：个性化页「修改昵称和头像」块）
+  'PUT /api/profile': (ctx) => {
+    const u = ctx.user
+    if (!u) return fail(2001, '未登录')
+    const { nickname, avatarObjectKey } = ctx.body
+    if (nickname !== undefined) {
+      const n = String(nickname).trim()
+      if (!n || n.length > 20) return fail(1001, '昵称需 1~20 个字符')
+      u.nickname = n
+    }
+    if (avatarObjectKey) {
+      u.avatarObjectKey = avatarObjectKey
+      u.avatarUrl = loadDb().uploads[avatarObjectKey] || '/avatar-default.png'
+    }
+    saveDb()
+    return ok({
+      userId: u.id,
+      nickname: u.nickname || (u.email || '').split('@')[0],
+      avatarUrl: u.avatarUrl || '/avatar-default.png'
+    })
+  },
+
   // ---- §5.5 上传（文章封面）----
   'POST /api/uploads/images': (ctx) => {
     const file = ctx.body.file
@@ -255,6 +277,11 @@ const routes = {
       const reader = new FileReader()
       reader.onload = () => {
         const objectKey = `user_${ctx.user.id}/tmp/${uid()}.png`
+        // 预览图存进 mock 库：PUT /api/profile 换头像时能按 objectKey 解析出图（2026-10-28）
+        const d = loadDb()
+        d.uploads = d.uploads || {}
+        d.uploads[objectKey] = reader.result
+        saveDb()
         resolve(ok({ objectKey, contentType: file.type || 'image/png', sizeBytes: file.size, previewUrl: reader.result }))
       }
       reader.onerror = () => resolve(fail(5000, '文件读取失败'))

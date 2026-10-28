@@ -9,6 +9,40 @@
       </div>
     </div>
 
+    <!-- 修改昵称和头像（2026-10-28：与编辑壁纸/主题色平级，用户点左下角头像改不了，入口收在这里） -->
+    <section class="menu-block glass">
+      <button class="menu-row" @click="toggle('profile')">
+        <svg class="m-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+        </svg>
+        <span class="m-label">修改昵称和头像</span>
+        <svg class="m-chev" :class="{ open: openSection === 'profile' }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+
+      <transition name="slide">
+        <div v-if="openSection === 'profile'" class="menu-body">
+          <!-- 头像：点击更换（自动居中裁方 + 压缩后上传） -->
+          <div class="prof-row">
+            <button class="avatar-wrap" title="更换头像" @click="avatarInput?.click()">
+              <img class="avatar" :src="avatarUrl" alt="头像" />
+              <span class="avatar-mask">更换</span>
+            </button>
+            <input ref="avatarInput" type="file" accept="image/*" hidden @change="onAvatarFile" />
+            <div class="prof-tip dim">点击头像更换，自动裁方压缩后上传</div>
+          </div>
+
+          <!-- 昵称 -->
+          <div class="prof-row">
+            <input
+              ref="nickInput" v-model.trim="nickDraft" class="nick-input" maxlength="20"
+              placeholder="1~20 个字符" @keyup.enter="saveNickname"
+            />
+            <button class="mini-btn amber" type="button" @click="saveNickname">保存昵称</button>
+          </div>
+        </div>
+      </transition>
+    </section>
+
     <!-- 编辑壁纸 -->
     <section class="menu-block glass">
       <button class="menu-row" @click="toggle('wallpaper')">
@@ -170,6 +204,7 @@ import AdminShell from '@/components/AdminShell.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWallpaperStore, loadManifest, randomFromCategory } from '@/stores/wallpaper'
 import { useThemeStore, PRESETS } from '@/stores/theme'
+import { getProfile, updateProfile, uploadImage } from '@/api'
 import { toast } from '@/utils/toast'
 import { readPref } from '@/utils/prefs'
 
@@ -179,16 +214,81 @@ const wp = useWallpaperStore()
 const theme = useThemeStore()
 
 const categories = ref([])
-const openSection = ref('') // 进来默认全部收起（2026-10-28 用户要求，不再默认展开壁纸区）
+const openSection = ref('') // 进来默认全部收起（2026-10-28 用户要求，不再默认展开壁纸区）；'profile'|'wallpaper'|'theme'|'account'
 const panelOpen = ref(false) // 「换一张」分类面板
 const rolling = ref(false)
 
+// 昵称/头像修改（2026-10-28「修改昵称和头像」块）
+const avatarUrl = ref('/avatar-default.png')
+const nickDraft = ref('')
+const nickInput = ref(null)
+const avatarInput = ref(null)
+
 onMounted(async () => {
   categories.value = await loadManifest()
+  try {
+    const p = await getProfile()
+    if (p?.avatarUrl) avatarUrl.value = p.avatarUrl
+    nickDraft.value = p?.nickname || auth.email.split('@')[0]
+  } catch { /* 资料拉不到不阻塞页面 */ }
 })
 
 function toggle(name) {
+  if (name === 'profile' && openSection.value !== 'profile') {
+    // 每次展开回填当前昵称（避免沿用上次草稿）
+    nickDraft.value = nickDraft.value || auth.email.split('@')[0]
+  }
   openSection.value = openSection.value === name ? '' : name
+}
+
+// ---------- 昵称/头像 ----------
+async function saveNickname() {
+  const n = nickDraft.value.trim()
+  if (!n) return toast('昵称不能为空')
+  if (n.length > 20) return toast('昵称最多 20 个字符')
+  try {
+    const data = await updateProfile({ nickname: n })
+    nickDraft.value = data?.nickname || n
+    window.dispatchEvent(new CustomEvent('profile-updated', { detail: data })) // 通知 AdminShell 刷新左下角
+    toast('昵称已更新')
+  } catch (e) {
+    toast(e.message)
+  }
+}
+
+function downscale(file, size = 256) {
+  // 居中裁方 + 缩到 256，避免大图把存储塞爆（与 web-user 同款）
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = canvas.height = size
+      const ctx = canvas.getContext('2d')
+      const s = Math.min(img.width, img.height)
+      ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size)
+      canvas.toBlob(b => resolve(b || file), 'image/jpeg', 0.85)
+      URL.revokeObjectURL(url)
+    }
+    img.onerror = () => resolve(file)
+    img.src = url
+  })
+}
+
+async function onAvatarFile(e) {
+  const file = e.target.files && e.target.files[0]
+  e.target.value = ''
+  if (!file) return
+  try {
+    const small = await downscale(file)
+    const up = await uploadImage(small)
+    const data = await updateProfile({ avatarObjectKey: up.objectKey })
+    if (data?.avatarUrl) avatarUrl.value = data.avatarUrl
+    window.dispatchEvent(new CustomEvent('profile-updated', { detail: data })) // 通知 AdminShell 刷新左下角
+    toast('头像已更换')
+  } catch (err) {
+    toast(err.message)
+  }
 }
 
 // ---------- 壁纸 ----------
@@ -470,5 +570,66 @@ function onLogout() {
   padding: 12px;
   font-size: 14px;
   letter-spacing: 2px;
+}
+
+/* ---------- 修改昵称和头像（2026-10-28） ---------- */
+.prof-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.prof-row + .prof-row { margin-top: 14px; }
+.prof-tip { font-size: 12.5px; color: var(--text-dim); }
+.avatar-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0;
+  flex: none;
+  cursor: pointer;
+}
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.avatar-wrap:hover .avatar-mask { opacity: 1; }
+.nick-input {
+  width: 220px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border);
+  font-size: 14px;
+  color: var(--text);
+}
+.mini-btn {
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  cursor: pointer;
+}
+.mini-btn.amber {
+  color: var(--theme-text);
+  border-color: rgb(var(--theme-rgb) / 0.5);
 }
 </style>

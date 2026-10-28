@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { getProfile } from '@/api'
 
@@ -59,13 +59,19 @@ const auth = useAuthStore()
 // 左下角账号展示：头像 + 昵称 + 邮箱（2026-10-28 补昵称行；拉不到资料就用系统默认头像）
 const avatarUrl = ref('/avatar-default.png')
 const nickname = ref('')
-onMounted(async () => {
+async function loadProfile() {
   try {
     const p = await getProfile()
     if (p?.avatarUrl) avatarUrl.value = p.avatarUrl
     if (p?.nickname) nickname.value = p.nickname
   } catch { /* 静默回退默认头像 */ }
+}
+onMounted(() => {
+  loadProfile()
+  // 个性化页改完昵称/头像后即时刷新左下角（2026-10-28）
+  window.addEventListener('profile-updated', loadProfile)
 })
+onUnmounted(() => window.removeEventListener('profile-updated', loadProfile))
 
 // 侧栏收起/展开（2026-10-28）：收起时整个侧栏（品牌+导航+账号）退回界面外，
 // 把手滑到整个界面最左侧，再点一下全部展开；偏好记 localStorage 刷新不丢
