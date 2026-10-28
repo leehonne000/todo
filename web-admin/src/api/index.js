@@ -30,3 +30,10 @@ export const adminListMilestones = (examYear) => get('/api/admin/milestones', { 
 export const adminCreateMilestone = (data) => post('/api/admin/milestones', data)
 export const adminUpdateMilestone = (id, data) => put(`/api/admin/milestones/${id}`, data)
 export const adminDeleteMilestone = (id) => del(`/api/admin/milestones/${id}`)
+
+// ---- §11.14~11.17 留言管理（读者来信，2026-10-28）----
+export const adminListMessages = (params) => get('/api/admin/messages', params) // {authorId?,articleId?,page,size}
+export const adminGetMessageThread = (articleId, userId) => get(`/api/admin/messages/${articleId}/${userId}`)
+export const adminReplyMessage = (articleId, userId, content) => post(`/api/admin/messages/${articleId}/${userId}`, { content })
+export const adminDeleteMessage = (id) => del(`/api/admin/messages/${id}`)
+export const adminUnreadMessages = () => get('/api/admin/messages/unread')

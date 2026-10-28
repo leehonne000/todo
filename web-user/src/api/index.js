@@ -41,3 +41,8 @@ export const getProgress = (from, to) => get('/api/progress', { from, to })
 export const getInfoOverview = () => get('/api/info/overview')
 export const getArticles = (page, size) => get('/api/articles', { page, size })
 export const getArticle = (id) => get(`/api/articles/${id}`)
+
+// ---- §9.4~9.6 文章留言（读者来信，2026-10-28）----
+export const sendMessage = (articleId, content) => post(`/api/articles/${articleId}/messages`, { content })
+export const getMessageThread = (articleId) => get(`/api/articles/${articleId}/messages`)
+export const getUnreadMessages = () => get('/api/messages/unread')

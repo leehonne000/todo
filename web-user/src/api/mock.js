@@ -148,35 +148,44 @@ function seed() {
     nextUserId: 8,
     articles: [
       {
-        id: 1, authorName: '园丁',
+        id: 1, authorId: 7, authorName: '园丁',
         title: '2027 考研预报名已开启，这些材料提前备好',
         content: '预报名一般面向应届生，往届生也可参加。请提前准备：身份证、学历学籍信息、户籍与档案所在地、报考点选择。\n\n注意三点：\n1. 报名号生成后牢记，网上确认时要用；\n2. 报考点名额有限，热门城市可能满员，尽量早报；\n3. 生成报名号但未缴费视为报名无效。\n\n正式报名期间可修改部分信息，但报考单位、考试方式等关键项不能改，只能重报。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-4)}T10:00:00`, updatedAt: `${d(-4)}T10:00:00`
       },
       {
-        id: 2, authorName: '小笔',
+        id: 2, authorId: 8, authorName: '小笔',
         title: '冲刺期每日时间表参考（供参考，别硬抄）',
         content: '很多同学问“一天学多久才够”。答案是：比昨天多一点就够。\n\n一个可执行的骨架：\n· 上午 3h：数学/专业课硬骨头（脑子最清醒）\n· 下午 2.5h：英语阅读/翻译或专业课\n· 晚上 2h：政治选择/错题复盘\n· 睡前 0.5h：翻今天记的 note（正好走一遍艾宾浩斯）\n\n关键是“开始”而不是“完美”。状态差的时候先做 25 分钟试试。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-8)}T20:00:00`, updatedAt: `${d(-8)}T20:00:00`
       },
       {
-        id: 3, authorName: '园丁',
+        id: 3, authorId: 7, authorName: '园丁',
         title: '关于心态：焦虑是正常的',
         content: '考研是场持久战。你不是一个人在焦虑。\n\n几个小建议：\n· 和昨天的自己比，不和别人比；\n· 累了就休息，休息不是犯罪；\n· 记录（比如用 Big Tree 记 note/错题）本身就是一种整理焦虑的方式。\n\n祝顺利。',
         coverObjectKey: null, coverUrl: null,
         status: 1, publishedAt: `${d(-15)}T09:00:00`, updatedAt: `${d(-15)}T09:00:00`
       },
       {
-        id: 4, authorName: '小笔',
+        id: 4, authorId: 8, authorName: '小笔',
         title: '（草稿）12 月准考证打印提醒',
         content: '这是一篇草稿，普通用户看不到。',
         coverObjectKey: null, coverUrl: null,
         status: 0, publishedAt: null, updatedAt: t
       }
     ],
-    nextArticleId: 5
+    nextArticleId: 5,
+    // 文章留言（§9.4 读者来信）：demo 用户与文章作者的多轮对话串，含一条未读回复（信息入口红点演示）
+    messages: [
+      { id: 1, articleId: 1, userId: 6, senderRole: 0, content: '请问往届生预报名报不上，只能等正式报名吗？', isRead: true, createdAt: `${d(-3)}T21:10:00` },
+      { id: 2, articleId: 1, userId: 6, senderRole: 1, content: '是的，预报名主要面向应届生，往届生走正式报名即可，10 月 15 日开放。', isRead: true, createdAt: `${d(-3)}T22:05:00` },
+      { id: 3, articleId: 1, userId: 6, senderRole: 0, content: '明白了，谢谢老师！', isRead: true, createdAt: `${d(-3)}T22:12:00` },
+      { id: 4, articleId: 2, userId: 6, senderRole: 0, content: '数学三换序的题一直错，有什么专门练的办法吗？', isRead: false, createdAt: `${d(-1)}T19:40:00` },
+      { id: 5, articleId: 2, userId: 6, senderRole: 1, content: '建议一天 3 道专项 + 当晚复盘错因，两周就有感觉了。别一次刷 20 道。', isRead: false, createdAt: `${d(-1)}T20:30:00` }
+    ],
+    nextMessageId: 6
   }
 }
 
@@ -241,6 +250,17 @@ function entryDetail(e) {
     createdAt: e.createdAt,
     round: e.round,
     reviewStatus: e.reviewStatus
+  }
+}
+
+/** 消息气泡的发送者身份（昵称+头像）：senderRole 0=当前用户，1=文章作者管理员 */
+function msgSender(d, m, a, viewer) {
+  const u = m.senderRole === 0
+    ? (d.users.find(x => x.id === (m.senderId ?? m.userId)) || viewer)
+    : d.users.find(x => x.id === (m.senderId ?? a.authorId))
+  return {
+    senderName: u ? (u.nickname || u.email.split('@')[0]) : (a.authorName || '管理员'),
+    senderAvatar: (u && u.avatarUrl) || '/avatar-default.png'
   }
 }
 
@@ -626,7 +646,55 @@ const routes = {
     const d = loadDb()
     const a = d.articles.find(x => x.id === Number(ctx.params.id))
     if (!a || a.status !== 1) return fail(3002, '文章不存在或未发布')
-    return ok({ id: a.id, title: a.title, authorName: a.authorName || '未知', content: a.content, coverUrl: a.coverUrl, publishedAt: a.publishedAt })
+    return ok({ id: a.id, authorId: a.authorId ?? null, title: a.title, authorName: a.authorName || '未知', content: a.content, coverUrl: a.coverUrl, publishedAt: a.publishedAt })
+  },
+
+  // ---- §9.4~9.6 文章留言（读者来信）----
+  // 会话 = (articleId, userId) 多轮对话串；is_read 红点口径：0=对方未读
+  'POST /api/articles/:id/messages': (ctx) => {
+    const d = loadDb()
+    const a = d.articles.find(x => x.id === Number(ctx.params.id))
+    if (!a || a.status !== 1) return fail(3002, '文章不存在或未发布')
+    if (a.authorId != null && a.authorId === ctx.user.id) return fail(1001, '不能给自己的文章留言')
+    const content = String(ctx.body.content || '').trim()
+    if (!content) return fail(1001, '留言内容不能为空')
+    if (content.length > 300) return fail(1001, '留言最多 300 字')
+    const m = {
+      id: d.nextMessageId++, articleId: a.id, userId: ctx.user.id,
+      senderRole: 0, content, isRead: false, createdAt: new Date().toISOString().slice(0, 19)
+    }
+    d.messages.push(m)
+    saveDb()
+    return ok({ id: m.id, senderRole: 0, content: m.content, createdAt: m.createdAt, ...msgSender(d, m, a, ctx.user) })
+  },
+
+  'GET /api/articles/:id/messages': (ctx) => {
+    const d = loadDb()
+    const a = d.articles.find(x => x.id === Number(ctx.params.id))
+    if (!a) return fail(3002, '文章不存在')
+    // 打开对话 = 已读管理员回复（消信息入口红点）
+    let changed = false
+    for (const m of d.messages) {
+      if (m.articleId === a.id && m.userId === ctx.user.id && m.senderRole === 1 && !m.isRead) {
+        m.isRead = true
+        changed = true
+      }
+    }
+    if (changed) saveDb()
+    const thread = d.messages
+      .filter(m => m.articleId === a.id && m.userId === ctx.user.id)
+      .sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || ''))
+      .map(m => ({ id: m.id, senderRole: m.senderRole, content: m.content, createdAt: m.createdAt, ...msgSender(d, m, a, ctx.user) }))
+    return ok({ articleId: a.id, title: a.title, authorName: a.authorName || '未知', messages: thread })
+  },
+
+  'GET /api/messages/unread': (ctx) => {
+    const d = loadDb()
+    const mine = d.messages.filter(m => m.userId === ctx.user.id && m.senderRole === 1 && !m.isRead)
+    return ok({
+      count: mine.length,
+      articleIds: [...new Set(mine.map(m => m.articleId))]
+    })
   }
 }
 

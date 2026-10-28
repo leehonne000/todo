@@ -17,6 +17,9 @@ public class ArticleDetailResponse {
 
     private Long id;
 
+    /** 作者 id（2026-10-28 留言功能：前端判断"自己的文章"隐藏留言入口） */
+    private Long authorId;
+
     private String title;
 
     /** 作者显示名（昵称，缺省邮箱 @ 前缀） */

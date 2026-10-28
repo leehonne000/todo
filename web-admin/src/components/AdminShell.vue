@@ -14,6 +14,8 @@
         <router-link v-for="item in navItems" :key="item.to" :to="item.to" class="nav-item">
           <span class="nav-icon" v-html="item.icon"></span>
           <span>{{ item.label }}</span>
+          <!-- 留言管理红点（2026-10-28）：有用户新留言时亮 -->
+          <span v-if="item.to === '/messages' && msgUnread > 0" class="nav-badge num">{{ msgUnread > 99 ? '99+' : msgUnread }}</span>
         </router-link>
       </nav>
 
@@ -52,7 +54,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { getProfile } from '@/api'
+import { getProfile, adminUnreadMessages } from '@/api'
 
 const auth = useAuthStore()
 
@@ -68,10 +70,25 @@ async function loadProfile() {
 }
 onMounted(() => {
   loadProfile()
+  loadMsgUnread()
   // 个性化页改完昵称/头像后即时刷新左下角（2026-10-28）
   window.addEventListener('profile-updated', loadProfile)
+  // 留言管理读/删后即时消红点（2026-10-28）
+  window.addEventListener('messages-unread-refresh', loadMsgUnread)
 })
-onUnmounted(() => window.removeEventListener('profile-updated', loadProfile))
+onUnmounted(() => {
+  window.removeEventListener('profile-updated', loadProfile)
+  window.removeEventListener('messages-unread-refresh', loadMsgUnread)
+})
+
+// 「留言管理」红点（§11.14）：用户新留言条数；打开会话/删除后由页面广播刷新
+const msgUnread = ref(0)
+async function loadMsgUnread() {
+  try {
+    const data = await adminUnreadMessages()
+    msgUnread.value = data?.count || 0
+  } catch { /* 静默：未登录/失败不打扰 */ }
+}
 
 // 侧栏收起/展开（2026-10-28）：收起时整个侧栏（品牌+导航+账号）退回界面外，
 // 把手滑到整个界面最左侧，再点一下全部展开；偏好记 localStorage 刷新不丢
@@ -102,6 +119,10 @@ const allNavItems = [
   {
     to: '/milestones', label: '硬节点管理', superOnly: true,
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2.5"/></svg>'
+  },
+  {
+    to: '/messages', label: '留言管理', superOnly: false,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20l1.1-4.9A8.4 8.4 0 0 1 3.1 11 8.5 8.5 0 0 1 12 2.5a8.4 8.4 0 0 1 9 9z"/></svg>'
   }
 ]
 // 「个性化」固定显示且排在该账号可见的全部管理项之后（2026-10-27 用户指定）
@@ -168,6 +189,21 @@ const navItems = [...allNavItems.filter(i => !i.superOnly || auth.isSuperAdmin),
 }
 .nav-icon { display: flex; }
 .nav-icon :deep(svg) { width: 19px; height: 19px; }
+
+/* 留言管理红点（2026-10-28）：未读留言条数 */
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ---------- 底部：当前账号信息展示 ---------- */
 .side-foot {

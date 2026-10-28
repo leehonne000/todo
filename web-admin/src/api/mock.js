@@ -93,6 +93,16 @@ function seed() {
       }
     ],
     milestones,
+    // 文章留言（§11.14 读者来信）：演示会话——demo 给园丁(1)留言 2 条未读；林华给小笔(6)留言且已回复
+    messages: [
+      { id: 1, articleId: 1, userId: 2, senderRole: 0, content: '请问往届生预报名报不上，只能等正式报名吗？', isRead: true, createdAt: `${dateStr(-3)}T21:10:00` },
+      { id: 2, articleId: 1, userId: 2, senderRole: 1, content: '是的，预报名主要面向应届生，往届生走正式报名即可。', isRead: true, createdAt: `${dateStr(-3)}T22:05:00` },
+      { id: 3, articleId: 1, userId: 2, senderRole: 0, content: '明白了，谢谢老师！报考点怎么选比较稳？', isRead: false, createdAt: `${dateStr(-1)}T09:20:00` },
+      { id: 4, articleId: 3, userId: 5, senderRole: 0, content: '最近特别焦虑，学不进去怎么办？', isRead: false, createdAt: `${dateStr(-1)}T23:40:00` },
+      { id: 5, articleId: 2, userId: 3, senderRole: 0, content: '数学三换序的题一直错，有什么专门练的办法吗？', isRead: true, createdAt: `${dateStr(-2)}T19:40:00` },
+      { id: 6, articleId: 2, userId: 3, senderRole: 1, content: '建议一天 3 道专项 + 当晚复盘错因，两周就有感觉了。', isRead: false, createdAt: `${dateStr(-2)}T20:30:00` }
+    ],
+    nextMessageId: 7,
     nextArticleId: 6,
     nextMilestoneId: msId
   }
@@ -217,6 +227,22 @@ function validateMilestone(body) {
   if (!body.dateFrom) return '起始日 dateFrom 必填'
   if (body.dateTo && body.dateTo < body.dateFrom) return '结束日不能早于起始日'
   return null
+}
+
+/** 用户头像地址（与后端同口径：空 → 默认图） */
+function avatarOf(u) {
+  return (u && u.avatarUrl) || '/avatar-default.png'
+}
+
+/** 消息气泡的发送者身份（昵称+头像）：0=会话用户，1=管理员（sender_id 优先，回退文章作者） */
+function msgSender(d, m, a, fallbackAdmin) {
+  const u = m.senderRole === 0
+    ? d.users.find(x => x.id === (m.senderId ?? m.userId))
+    : (d.users.find(x => x.id === (m.senderId ?? (a && a.authorId))) || fallbackAdmin)
+  return {
+    senderName: u ? (u.nickname || u.email.split('@')[0]) : '管理员',
+    senderAvatar: avatarOf(u)
+  }
 }
 
 // ---------- 路由表 ----------
@@ -476,6 +502,143 @@ const routes = {
     d.milestones.splice(idx, 1)
     saveDb()
     return ok(null)
+  },
+
+  // ---- §11.14 留言会话列表（管理员=自己文章；超管=全部可筛）----
+  'GET /api/admin/messages': (ctx) => {
+    const denied = needAdmin(ctx.user); if (denied) return denied
+    const d = loadDb()
+    // 互不可见：普通管理员只看自己文章下的留言
+    let msgs = d.messages.filter(m => {
+      if (ctx.user.role >= 2) return true
+      const a = d.articles.find(x => x.id === m.articleId)
+      return a && a.authorId === ctx.user.id
+    })
+    // 超管筛选：按文章作者 / 按文章
+    if (ctx.user.role >= 2) {
+      if (ctx.query.authorId) {
+        const aid = Number(ctx.query.authorId)
+        msgs = msgs.filter(m => {
+          const a = d.articles.find(x => x.id === m.articleId)
+          return a && a.authorId === aid
+        })
+      }
+      if (ctx.query.articleId) msgs = msgs.filter(m => m.articleId === Number(ctx.query.articleId))
+    }
+    // 按会话 (articleId, userId) 分组，最新会话在前
+    const groups = new Map()
+    for (const m of msgs) {
+      const key = `${m.articleId}:${m.userId}`
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key).push(m)
+    }
+    const items = []
+    for (const thread of groups.values()) {
+      thread.sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || ''))
+      const first = thread[0]
+      const last = thread[thread.length - 1]
+      const a = d.articles.find(x => x.id === first.articleId)
+      const u = d.users.find(x => x.id === first.userId)
+      items.push({
+        articleId: first.articleId, userId: first.userId,
+        articleTitle: a ? a.title : '',
+        authorId: a ? a.authorId : null,
+        authorName: a ? authorNameOf(d, a.authorId) : '',
+        userName: u ? (u.nickname || u.email.split('@')[0]) : `用户${first.userId}`,
+        userEmail: u ? u.email : null,
+        userAvatar: avatarOf(u),
+        lastContent: last.content, lastAt: last.createdAt, lastFrom: last.senderRole,
+        unreadCount: thread.filter(m => m.senderRole === 0 && !m.isRead).length,
+        messageCount: thread.length
+      })
+    }
+    items.sort((x, y) => (y.lastAt || '').localeCompare(x.lastAt || ''))
+    return ok({ ...paginate(items, ctx.query) })
+  },
+
+  // ---- §11.15 会话详情（打开即把用户留言标已读）----
+  'GET /api/admin/messages/:articleId/:userId': (ctx) => {
+    const denied = needAdmin(ctx.user); if (denied) return denied
+    const d = loadDb()
+    const articleId = Number(ctx.params.articleId)
+    const userId = Number(ctx.params.userId)
+    const a = d.articles.find(x => x.id === articleId)
+    if (!a) return fail(3002, '文章不存在')
+    // 互不可见铁律：会话操作权=文章作者或超管
+    if (ctx.user.role < 2 && a.authorId !== ctx.user.id) return fail(2002, '只能查看自己文章的留言')
+    // 消管理红点：用户发来的未读 → 已读
+    let changed = false
+    for (const m of d.messages) {
+      if (m.articleId === articleId && m.userId === userId && m.senderRole === 0 && !m.isRead) {
+        m.isRead = true
+        changed = true
+      }
+    }
+    if (changed) saveDb()
+    const thread = d.messages
+      .filter(m => m.articleId === articleId && m.userId === userId)
+      .sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || ''))
+      .map(m => ({ id: m.id, senderRole: m.senderRole, content: m.content, createdAt: m.createdAt, ...msgSender(d, m, a, ctx.user) }))
+    const u = d.users.find(x => x.id === userId)
+    return ok({
+      articleId, userId,
+      authorId: a.authorId,
+      articleTitle: a.title,
+      authorName: authorNameOf(d, a.authorId),
+      userName: u ? (u.nickname || u.email.split('@')[0]) : `用户${userId}`,
+      userEmail: u ? u.email : null,
+      userAvatar: avatarOf(u),
+      messages: thread
+    })
+  },
+
+  // ---- §11.16 回复用户（仅该用户可见）----
+  'POST /api/admin/messages/:articleId/:userId': (ctx) => {
+    const denied = needAdmin(ctx.user); if (denied) return denied
+    const d = loadDb()
+    const articleId = Number(ctx.params.articleId)
+    const userId = Number(ctx.params.userId)
+    const a = d.articles.find(x => x.id === articleId)
+    if (!a) return fail(3002, '文章不存在')
+    // 回复权=仅文章作者本人（超管可看全部但不可代回复，2026-10-28 权限定稿）
+    if (a.authorId !== ctx.user.id) return fail(2002, '只能回复发给自己文章的留言')
+    const content = String(ctx.body.content || '').trim()
+    if (!content) return fail(1001, '留言内容不能为空')
+    if (content.length > 300) return fail(1001, '留言最多 300 字')
+    const m = {
+      id: d.nextMessageId++, articleId, userId,
+      senderId: ctx.user.id,
+      senderRole: 1, content, isRead: false, createdAt: now()
+    }
+    d.messages.push(m)
+    saveDb()
+    return ok({ id: m.id, senderRole: 1, content: m.content, createdAt: m.createdAt, ...msgSender(d, m, a, ctx.user) })
+  },
+
+  // ---- §11.17 删除留言（管理员删自己文章下的，超管删任意）----
+  'DELETE /api/admin/messages/:id': (ctx) => {
+    const denied = needAdmin(ctx.user); if (denied) return denied
+    const d = loadDb()
+    const idx = d.messages.findIndex(x => x.id === Number(ctx.params.id))
+    if (idx < 0) return fail(3002, '留言不存在')
+    const a = d.articles.find(x => x.id === d.messages[idx].articleId)
+    if (ctx.user.role < 2 && (!a || a.authorId !== ctx.user.id)) return fail(2002, '只能删除自己文章的留言')
+    d.messages.splice(idx, 1)
+    saveDb()
+    return ok(null)
+  },
+
+  // ---- 「留言管理」侧栏红点 ----
+  'GET /api/admin/messages/unread': (ctx) => {
+    const denied = needAdmin(ctx.user); if (denied) return denied
+    const d = loadDb()
+    const count = d.messages.filter(m => {
+      if (m.senderRole !== 0 || m.isRead) return false
+      if (ctx.user.role >= 2) return true
+      const a = d.articles.find(x => x.id === m.articleId)
+      return a && a.authorId === ctx.user.id
+    }).length
+    return ok({ count })
   }
 }
 

@@ -76,7 +76,7 @@
         class="article-card glass" @click="$router.push(`/info/article/${a.id}`)"
       >
         <div class="a-main">
-          <h3 class="a-title">{{ a.title }}</h3>
+          <h3 class="a-title">{{ a.title }}<span v-if="unreadArticleIds.has(a.id)" class="a-badge" title="有未读回复"></span></h3>
           <p class="a-date dim num">{{ (a.publishedAt || '').replace('T', ' ').slice(0, 10) }}<span v-if="a.authorName" class="a-author"> · {{ a.authorName }}</span></p>
         </div>
         <img v-if="a.coverUrl" class="a-cover" :src="a.coverUrl" alt="" />
@@ -89,12 +89,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import TopBar from '@/components/TopBar.vue'
-import { getInfoOverview, getArticles } from '@/api'
+import { getInfoOverview, getArticles, getUnreadMessages } from '@/api'
 import { studyDate } from '@/utils/format'
 import { toast } from '@/utils/toast'
 
 const overview = ref({ examYear: '', daysLeft: 0, milestones: [] })
 const articles = ref([])
+// 有未读回复的文章（读者来信红点定位，2026-10-28）
+const unreadArticleIds = ref(new Set())
 
 // 学习日「今天」
 const todayStr = studyDate()
@@ -169,9 +171,10 @@ const tl = computed(() => {
 
 onMounted(async () => {
   try {
-    const [ov, arts] = await Promise.all([getInfoOverview(), getArticles(1, 20)])
+    const [ov, arts, unread] = await Promise.all([getInfoOverview(), getArticles(1, 20), getUnreadMessages()])
     overview.value = ov
     articles.value = arts.items
+    unreadArticleIds.value = new Set(unread.articleIds || [])
   } catch (e) {
     toast(e.message)
   }
@@ -364,6 +367,16 @@ onMounted(async () => {
 .article-card:hover { background: var(--glass-bg-strong); }
 .a-main { flex: 1; min-width: 0; }
 .a-title { font-size: 15.5px; font-weight: 500; line-height: 1.55; }
+/* 未读回复红点（读者来信） */
+.a-badge {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5484d;
+  margin-left: 8px;
+  vertical-align: 2px;
+}
 .a-date { margin-top: 7px; font-size: 12px; }
 .a-author { color: var(--theme-text); }
 .a-cover {

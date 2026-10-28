@@ -216,6 +216,31 @@ CREATE TABLE t_verify_code (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='邮箱验证码';
 
 -- ------------------------------------------------------------
+-- 12. t_message 文章留言（2026-10-28 新增）
+-- 业务绑定：信息模块「读者来信」（§9.4）——文章下的一对一私密留言通道，非公开评论区。
+-- 会话 = (article_id, user_id)：用户 ↔ 文章作者管理员 的多轮对话串；
+-- 可见性铁律：仅会话双方 + 超管可见；管理员之间互不可见、用户之间互不可见。
+-- 红点口径：is_read=0 表示对方未读；用户读回复 / 管理员读留言后置 1。
+-- 删除：管理员可删自己文章下的留言、超管可删任意；用户不可撤回。
+-- ------------------------------------------------------------
+CREATE TABLE t_message (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  article_id  BIGINT UNSIGNED NOT NULL COMMENT '所属文章（t_article.id）；会话锚点',
+  user_id     BIGINT UNSIGNED NOT NULL COMMENT '会话中的用户方（发送者 when sender_role=0 / 收件人 when sender_role=1）',
+  sender_id   BIGINT UNSIGNED DEFAULT NULL COMMENT '真实发送者（t_user.id，冗余）：气泡头像/昵称解析；历史数据可空，服务端回退 user_id/文章作者',
+  sender_role TINYINT         NOT NULL COMMENT '发送方：0=用户 1=管理员/超管（回复）',
+  content     VARCHAR(300)    NOT NULL COMMENT '留言正文（1~300 字）',
+  is_read     TINYINT         NOT NULL DEFAULT 0 COMMENT '对方已读：0=未读（红点） 1=已读',
+  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间（会话排序依据）',
+  PRIMARY KEY (id),
+  KEY idx_msg_thread (article_id, user_id, created_at),
+  KEY idx_msg_user_unread (user_id, sender_role, is_read),
+  KEY idx_msg_article (article_id),
+  CONSTRAINT fk_msg_article FOREIGN KEY (article_id) REFERENCES t_article (id) ON DELETE CASCADE,
+  CONSTRAINT fk_msg_user FOREIGN KEY (user_id) REFERENCES t_user (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='文章留言（读者来信：用户↔文章作者管理员私密会话）';
+
+-- ------------------------------------------------------------
 -- 参考数据：考研硬节点（每年按教育部公布结果插入，节点名固定 8 个）
 -- 示例（日期为示意，使用前替换为官方公布日期；浮动节点填区间/参考值）：
 -- INSERT INTO t_exam_milestone (exam_year, name, date_from, date_to, sort_order) VALUES

@@ -79,7 +79,7 @@ public class InfoService {
         Article a = articleRepository.findById(articleId)
                 .filter(x -> x.getStatus() == ArticleStatus.PUBLISHED)
                 .orElseThrow(() -> BizException.notFound("文章不存在或未发布"));
-        return new ArticleDetailResponse(a.getId(), a.getTitle(), authorName(a.getAuthorId()),
+        return new ArticleDetailResponse(a.getId(), a.getAuthorId(), a.getTitle(), authorName(a.getAuthorId()),
                 a.getContent(), coverUrl(a), a.getPublishedAt());
     }
 
