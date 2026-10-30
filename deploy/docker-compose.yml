@@ -27,6 +27,9 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
+    # 仅本机回环暴露，外部不可直连；本地工具经 SSH 隧道访问（见 docs/服务器运维速查.md）
+    ports:
+      - "127.0.0.1:3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -46,9 +49,11 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - minio-data:/data
-    # 9000 不对外暴露：图片经 Nginx 同域路径 /exam-timeline/ 反代（路线②）
+    # 9000 不对外暴露公网：图片经 Nginx 同域路径 /exam-timeline/ 反代（路线②）
+    # 9000/9001 均只绑本机回环，本地工具经 SSH 隧道访问（见 docs/服务器运维速查.md）
     ports:
-      - "127.0.0.1:9001:9001"   # 控制台仅本机回环；需要时用 SSH 隧道访问
+      - "127.0.0.1:9000:9000"   # S3 API 仅本机回环
+      - "127.0.0.1:9001:9001"   # 控制台仅本机回环
 
   api:
     build: ./api

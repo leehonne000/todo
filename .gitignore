@@ -38,3 +38,6 @@ deploy/seed.sql
 # 数据库备份含用户隐私、检查脚本含凭据，禁止入库
 temp/backup_*.sql
 temp/minio_inspect.py
+
+# 服务器运维速查（含账号密码，禁止入库）
+docs/服务器运维速查.md
