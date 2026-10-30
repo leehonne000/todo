@@ -33,6 +33,9 @@ function wallpaperServer() {
 // - 联调时启动后端（8080）并用 VITE_API_MODE=real npm run dev，/api 会被代理到后端
 // - 端口 5174 与 web-user（5173）错开，两个工程可同时开
 export default defineConfig({
+  // 生产构建挂 /admin/ 子路径（与 web-user 同域部署：用户端在 /，后台在 /admin/）；
+  // 开发保持根路径不变（NODE_ENV=development），跨端跳转 DEV 分支指 5174 根
+  base: process.env.NODE_ENV === 'production' ? '/admin/' : '/',
   plugins: [vue(), wallpaperServer()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }

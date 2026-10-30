@@ -31,18 +31,30 @@ import java.util.Map;
  * <p>私有桶 {@code exam-timeline}，读取一律走 SDK 签发的预签名 GET（短时效）；
  * objectKey 契约：上传期临时键 {@code user_{uid}/tmp/{uuid}.{ext}}，Done 归档 {@code user_{uid}/entry_{eid}/{文件名}}。
  * MinIO 没有原地改名，「移动」= 服务端 copy + 删源。原始文件名走对象 user metadata（x-amz-meta-original-name）。
+ *
+ * <p><b>预签名 host 与操作 host 分离（部署路线②，开发进度「二十八」）</b>：
+ * 预签名是本地计算不发网络请求，签名里的 host 必须等于浏览器实际访问的地址，
+ * 否则他机访问时会去请求自己/错误的 host（跨设备裂图）。因此：
+ * <ul>
+ *   <li>操作客户端（读写删）用 {@code app.minio.endpoint}——容器内网地址（如 http://minio:9000）；</li>
+ *   <li>预签名客户端用 {@code app.minio.presign-endpoint}——公网可达地址
+ *       （开发期 http://localhost:9000 / 局域网 IP，部署期经 Nginx 反代的同域/子域 HTTPS 地址）。</li>
+ * </ul>
+ * 未配置 presign-endpoint 时回退 endpoint（本地开发行为不变）。
  */
 @Slf4j
 @Service
 public class MinioStorageService {
 
     private final MinioClient client;
+    private final MinioClient presignClient;
     private final String bucket;
     private final int presignTtlSeconds;
     private volatile boolean bucketEnsured;
 
     public MinioStorageService(
             @Value("${app.minio.endpoint}") String endpoint,
+            @Value("${app.minio.presign-endpoint:}") String presignEndpoint,
             @Value("${app.minio.access-key}") String accessKey,
             @Value("${app.minio.secret-key}") String secretKey,
             @Value("${app.minio.bucket}") String bucket,
@@ -50,7 +62,19 @@ public class MinioStorageService {
         this.client = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
+                .region("us-east-1") // 固定 region：跳过 GetBucketLocation 查询（经反代时该查询签名不通）
                 .build();
+        this.client.disableVirtualStyleEndpoint(); // 强制路径风格（桶名进路径），兼容 Docker 内网主机名/反代
+        String presignBase = (presignEndpoint == null || presignEndpoint.isBlank()) ? endpoint : presignEndpoint;
+        this.presignClient = MinioClient.builder()
+                .endpoint(presignBase)
+                .credentials(accessKey, secretKey)
+                .region("us-east-1") // 同上；预签名纯本地计算，不再发起网络查询
+                .build();
+        this.presignClient.disableVirtualStyleEndpoint(); // 预签名 URL 形如 {presign-endpoint}/{bucket}/{key}?X-Amz-...
+        if (!presignBase.equals(endpoint)) {
+            log.info("MinIO 预签名 host 与操作 host 分离: presign={} ops={}", presignBase, endpoint);
+        }
         this.bucket = bucket;
         this.presignTtlSeconds = (int) (presignTtlHours * 3600);
     }
@@ -140,10 +164,11 @@ public class MinioStorageService {
         }
     }
 
-    /** 预签名 GET（短时效）——等效契约里的"预签名，短时效"，前端 img.src 直用 */
+    /** 预签名 GET（短时效）——等效契约里的"预签名，短时效"，前端 img.src 直用；
+     *  用 presignClient 签发（host=公网可达地址），签名本地计算不发请求 */
     public String signedUrl(String objectKey) {
         try {
-            return client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+            return presignClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(bucket)
                     .object(objectKey)

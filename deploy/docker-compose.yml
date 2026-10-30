@@ -1,0 +1,94 @@
+# Big Tree 部署编排（四容器：Nginx / API / MySQL / MinIO）
+# 服务器布局：/home/ubuntu/bigtree/
+#   ├── docker-compose.yml  ├── .env（凭据，不进 git）
+#   ├── nginx/default.conf  ├── api/Dockerfile + exam-timeline.jar
+#   ├── web/user/  web/admin/  web/wallpapers/  web/wallpapers-manifest.json
+#   └── backup/（滚动备份，backup.sh 由 cron 驱动）
+# 启动：docker compose up -d   查看：docker compose ps / logs -f api
+
+name: bigtree
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bt-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --max-connections=200
+      - --innodb-buffer-pool-size=512M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    # 自建纯 MinIO 镜像（ghcr.io/leehonne000/minio）；大陆服务器拉不动 ghcr 时
+    # 用本机 docker save 的 tar 上传后 docker load，标签保持 minio/minio:latest
+    image: minio/minio:latest
+    container_name: bt-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - minio-data:/data
+    # 9000 不对外暴露：图片经 Nginx 同域路径 /exam-timeline/ 反代（路线②）
+    ports:
+      - "127.0.0.1:9001:9001"   # 控制台仅本机回环；需要时用 SSH 隧道访问
+
+  api:
+    build: ./api
+    container_name: bt-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      TZ: Asia/Shanghai
+      # 数据库走 Docker 内网；覆盖本地开发的 localhost:3307
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      # MinIO 双地址（路线②）：操作走内网，预签名 host 必须是浏览器可达地址
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PRESIGN_ENDPOINT: ${MINIO_PRESIGN_ENDPOINT}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+
+  nginx:
+    image: nginx:alpine
+    container_name: bt-nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web/user:/usr/share/nginx/html/user:ro
+      - ./web/admin:/usr/share/nginx/html/admin:ro
+      - ./web/wallpapers:/usr/share/nginx/html/wallpapers:ro
+      - ./web/wallpapers-manifest.json:/usr/share/nginx/html/wallpapers-manifest.json:ro
+
+volumes:
+  mysql-data:
+  minio-data:

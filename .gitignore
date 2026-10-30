@@ -30,3 +30,11 @@ temp/*_codes.txt
 temp/verify_*_assert.py
 
 .idea
+# deploy 构建产物与种子数据（jar/前端产物/压缩壁纸不进库；seed 含账号行仅留服务器本地）
+deploy/api/*.jar
+deploy/web/
+deploy/seed.sql
+
+# 数据库备份含用户隐私、检查脚本含凭据，禁止入库
+temp/backup_*.sql
+temp/minio_inspect.py
