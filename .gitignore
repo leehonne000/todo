@@ -40,4 +40,4 @@ temp/backup_*.sql
 temp/minio_inspect.py
 
 # 服务器运维速查（含账号密码，禁止入库）
-docs/服务器运维速查.md
+deployed/服务器运维速查.md
