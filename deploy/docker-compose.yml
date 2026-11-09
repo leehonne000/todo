@@ -1,10 +1,14 @@
-# Big Tree 部署编排（四容器：Nginx / API / MySQL / MinIO）
+# Big Tree 部署编排（课程第 11 课 Compose 规范：services/networks/volumes + healthcheck + depends_on）
+# 四容器：Nginx(前端镜像) / API(多阶段构建) / MySQL / MinIO
 # 服务器布局：/home/ubuntu/bigtree/
-#   ├── docker-compose.yml  ├── .env（凭据，不进 git）
-#   ├── nginx/default.conf  ├── api/Dockerfile + exam-timeline.jar
-#   ├── web/user/  web/admin/  web/wallpapers/  web/wallpapers-manifest.json
-#   └── backup/（滚动备份，backup.sh 由 cron 驱动）
-# 启动：docker compose up -d   查看：docker compose ps / logs -f api
+#   ├── server/（后端源码：pom.xml + src/ + Dockerfile + settings.xml，构建 api 镜像用）
+#   └── deploy/
+#       ├── docker-compose.yml  ├── .env（凭据，不进 git）
+#       ├── init.sql（建表脚本，首次起空卷自动执行）  ├── seed.sql（种子数据，手动灌）
+#       ├── backup/（滚动备份，backup.sh 由 cron 驱动）
+#       └── web/（前端镜像构建上下文：Dockerfile + nginx/default.conf + user/ + admin/ + wallpapers/）
+# 启动：docker compose up -d --build   查看：docker compose ps / logs -f api
+# 壁纸池不打进前端镜像（数百 MB），仍按卷挂载
 
 name: bigtree
 
@@ -27,9 +31,13 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
+      # 首次起空卷自动建表（已初始化过的卷不会重复执行）
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     # 仅本机回环暴露，外部不可直连；本地工具经 SSH 隧道访问（见 deployed/服务器运维速查.md）
     ports:
       - "127.0.0.1:3306:3306"
+    networks:
+      - bt-net
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -54,9 +62,13 @@ services:
     ports:
       - "127.0.0.1:9000:9000"   # S3 API 仅本机回环
       - "127.0.0.1:9001:9001"   # 控制台仅本机回环
+    networks:
+      - bt-net
 
   api:
-    build: ./api
+    build:
+      context: ../server        # 多阶段构建（server/Dockerfile：maven 构建 → jre-alpine 运行）
+    image: exam-timeline-api:latest
     container_name: bt-api
     restart: unless-stopped
     depends_on:
@@ -78,9 +90,13 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - bt-net
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./web            # 前端镜像（web/Dockerfile：dist + nginx.conf 打进镜像）
+    image: exam-timeline-web:latest
     container_name: bt-nginx
     restart: unless-stopped
     depends_on:
@@ -88,11 +104,14 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./web/user:/usr/share/nginx/html/user:ro
-      - ./web/admin:/usr/share/nginx/html/admin:ro
       - ./web/wallpapers:/usr/share/nginx/html/wallpapers:ro
       - ./web/wallpapers-manifest.json:/usr/share/nginx/html/wallpapers-manifest.json:ro
+    networks:
+      - bt-net
+
+networks:
+  bt-net:
+    driver: bridge
 
 volumes:
   mysql-data:

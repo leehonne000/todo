@@ -121,10 +121,10 @@ async function load() {
     const params = { page: page.value, size }
     if (statusFilter.value !== 'all') params.status = statusFilter.value
     const data = await adminListArticles(params)
-    items.value = data.items
+    items.value = data.records
     total.value = data.total
     // 翻页/筛选后若当前页超出范围，回到第一页
-    if (!data.items.length && total.value > 0 && page.value > 1) {
+    if (!data.records.length && total.value > 0 && page.value > 1) {
       page.value = 1
       return load()
     }

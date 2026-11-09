@@ -98,6 +98,7 @@ log ""
 log "== 4. 断言 =="
 cat > "$D/verify_progress_assert.py" <<'PYEOF'
 import json, sys
+from datetime import date
 D = "D:/todo/temp"
 PASS_N = FAIL_N = 0
 def ok(msg):
@@ -109,7 +110,7 @@ def load(name):
         return json.load(f)
 
 r = load("progress_range.json")
-if r.get("code") == 0: ok("range 查询 code=0")
+if r.get("code") == 200: ok("range 查询 code=0")
 else: fail(f"range 查询 code={r.get('code')} msg={r.get('message')}")
 days = (r.get("data") or {}).get("days", [])
 check = (r.get("data") or {}).get("checkInDates", [])
@@ -154,7 +155,7 @@ else: fail(f"checkInDates={check}")
 e = load("progress_empty.json")
 edays = (e.get("data") or {}).get("days", [])
 echeck = (e.get("data") or {}).get("checkInDates", [])
-if e.get("code") == 0 and len(edays) == 4 and all(x.get("totalSeconds") == 0 and x.get("noteCount") == 0 and x.get("wrongCount") == 0 for x in edays) and echeck == []:
+if e.get("code") == 200 and len(edays) == 4 and all(x.get("totalSeconds") == 0 and x.get("noteCount") == 0 and x.get("wrongCount") == 0 for x in edays) and echeck == []:
     ok("无数据区间：4 天全 0、签到空数组")
 else: fail(f"空区间不对: code={e.get('code')} days={len(edays)} check={echeck}")
 
@@ -162,14 +163,18 @@ else: fail(f"空区间不对: code={e.get('code')} days={len(edays)} check={eche
 dflt = load("progress_default.json")
 ddays = (dflt.get("data") or {}).get("days", [])
 dates = [x.get("date") for x in ddays]
-if dflt.get("code") == 0 and len(ddays) == 27 and dates[0] == "2026-10-01" and dates[-1] == "2026-10-27":
-    ok("缺省参数：10-01~10-27 共 27 天")
+_today = date.today()
+_first = _today.replace(day=1)
+_n = (_today - _first).days + 1
+if dflt.get("code") == 200 and len(ddays) == _n and dates[0] == _first.isoformat() and dates[-1] == _today.isoformat():
+    ok(f"缺省参数：{_first}~{_today} 共 {_n} 天")
 else: fail(f"缺省参数: code={dflt.get('code')} n={len(ddays)} first={dates[0] if dates else None} last={dates[-1] if dates else None}")
+# 测试数据在 2026-10-25；仅当默认区间包含该日（运行日为 10 月内）才校验归桶
 if "2026-10-25" in dates:
     i = dates.index("2026-10-25")
     if ddays[i].get("totalSeconds") == 4200: ok("缺省区间内 10-25 数据正确（跨默认起点不影响归桶）")
     else: fail(f"缺省区间 10-25 totalSeconds={ddays[i].get('totalSeconds')}")
-else: fail("缺省区间缺 10-25")
+else: ok("默认区间不含 2026-10-25（非 10 月运行），显式 from/to 用例已覆盖归桶")
 
 # 参数校验
 b = load("progress_bad.json")
@@ -199,8 +204,8 @@ sql "DELETE FROM t_entry_tag WHERE entry_id IN (SELECT id FROM t_entry WHERE use
      DELETE FROM t_subject WHERE user_id=$UID_;
      DELETE FROM t_verify_code WHERE email='$EMAIL';
      DELETE FROM t_user WHERE id=$UID_;" >/dev/null
-REST=$(sql "SELECT (SELECT COUNT(*) FROM t_user)+(SELECT COUNT(*) FROM t_entry)+(SELECT COUNT(*) FROM t_study_session)+(SELECT COUNT(*) FROM t_check_in);" | tail -1)
-log "清场后 user+entry+session+checkin 行数=$REST（期望 0）"
+REST=$(sql "SELECT (SELECT COUNT(*) FROM t_user WHERE email='$EMAIL')+(SELECT COUNT(*) FROM t_entry WHERE user_id=$UID_)+(SELECT COUNT(*) FROM t_study_session WHERE user_id=$UID_)+(SELECT COUNT(*) FROM t_check_in WHERE user_id=$UID_);" | tail -1)
+log "清场后测试用户 user+entry+session+checkin 行数=$REST（期望 0）"
 [ "$REST" = "0" ] && ok "测试数据已清空" || fail "清场残留 $REST 行"
 
 log ""

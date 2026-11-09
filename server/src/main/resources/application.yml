@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: exam-timeline
+
+  # --- MySQL（本地开发：docker 容器 exam-mysql 映射 3307；部署时被 SPRING_DATASOURCE_URL 覆盖）---
+  datasource:
+    url: jdbc:mysql://localhost:3307/exam_timeline?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # --- 文件上传（图片）---
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
+
+  # --- Jackson：时间戳输出 ISO-8601 文本（契约 §1.1：2026-10-24T18:30:00）---
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  # --- Mail（QQ 邮箱 SMTP，注册激活/找回密码发验证码）---
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# --- MyBatis-Plus ---
+mybatis-plus:
+  type-aliases-package: com.leehonne.examtimeline.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      # 数据库 AUTO_INCREMENT 自增主键（schema.sql 与课程第 18 课 DDL 一致）
+      id-type: auto
+      table-underline: true
+
+# --- MinIO 对象存储（图片本体；私有桶 exam-timeline + 预签名 GET，契约 §10）---
+# 镜像分发注意：MinIO 2025-10 起停发 Docker Hub 免费镜像，本地/部署取镜像方案见 docs/开发进度.md 2026-10-26
+# endpoint=后端访问 MinIO 的地址（容器内网 http://minio:9000）；
+# presign-endpoint=预签名 URL 里的 host（浏览器可达地址；空=回退 endpoint，本地开发用）——部署路线②
+app:
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    presign-endpoint: ${MINIO_PRESIGN_ENDPOINT:}
+    access-key: ${MINIO_ROOT_USER}
+    secret-key: ${MINIO_ROOT_PASSWORD}
+    bucket: exam-timeline
+    presign-ttl-hours: 12
+  jwt:
+    secret: ${JWT_SECRET:exam-timeline-dev-secret-change-me-in-prod-please-32bytes}
+    expire-hours: 168
+
+# --- 日志 ---
+logging:
+  level:
+    root: INFO
+    com.leehonne.examtimeline: INFO
+
+# --- Actuator 健康检查（容器 HEALTHCHECK 用 /actuator/health，登录拦截器放行）---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

@@ -1,38 +1,36 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 /**
- * 标签词表（t_tag）—— 用户私有词表，同名复用（user_id+name 唯一），记录删除不影响标签。
+ * 标签（t_tag）—— 自由库用户自定义标签（§7）。
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_tag")
+@TableName("t_tag")
+@Schema(description = "标签实体")
 public class Tag {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
-    /** 归属用户：标签是用户私有词表 */
-    @Column(name = "user_id", nullable = false)
+    @Schema(description = "用户ID")
     private Long userId;
 
-    /** 标签文本（chip 上的字） */
-    @Column(nullable = false, length = 32)
+    @Schema(description = "标签名")
     private String name;
 
-    /** 首次创建时间 */
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

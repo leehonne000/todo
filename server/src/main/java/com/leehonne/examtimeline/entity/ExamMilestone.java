@@ -1,6 +1,11 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,50 +13,34 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 考研硬节点（t_exam_milestone）★ 全局表（无 user_id，人人共享）—— 每年教育部公布后维护。
- * 倒计时 = t_user.exam_year 对应 name='初试' 的 date_from 与今天之差。
+ * 考研硬节点（t_exam_milestone）—— 按届数维护的倒计时/时间线节点（§9）。
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_exam_milestone")
+@TableName("t_exam_milestone")
+@Schema(description = "考研硬节点实体")
 public class ExamMilestone {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
-    /** 届数：与 t_user.exam_year 对齐 */
-    @Column(name = "exam_year", nullable = false)
+    @Schema(description = "考研届数")
     private Integer examYear;
 
-    /** 节点名：预报名/正式报名/网上确认/准考证下载/初试/出分/国家线/调剂系统开放（8 全国性节点，2026-10-28 定稿） */
-    @Column(nullable = false, length = 32)
+    @Schema(description = "节点名")
     private String name;
 
-    /** 节点起始日 */
-    @Column(name = "date_from", nullable = false)
+    @Schema(description = "开始日期")
     private LocalDate dateFrom;
 
-    /** 节点结束日（跨日节点用；单日节点留空） */
-    @Column(name = "date_to")
+    @Schema(description = "结束日期（可空=单日节点）")
     private LocalDate dateTo;
 
-    /** 时间线展示顺序 */
-    @Column(name = "sort_order", nullable = false)
+    @Schema(description = "排序序号")
     private Integer sortOrder = 0;
 
-    /** 数据维护时间 */
-    @Column(name = "updated_at", nullable = false)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新时间")
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    void prePersist() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

@@ -173,7 +173,7 @@ onMounted(async () => {
   try {
     const [ov, arts, unread] = await Promise.all([getInfoOverview(), getArticles(1, 20), getUnreadMessages()])
     overview.value = ov
-    articles.value = arts.items
+    articles.value = arts.records
     unreadArticleIds.value = new Set(unread.articleIds || [])
   } catch (e) {
     toast(e.message)

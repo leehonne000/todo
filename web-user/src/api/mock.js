@@ -527,10 +527,11 @@ const routes = {
     const page = Math.max(1, Number(q.page) || 1)
     const size = Math.min(50, Math.max(1, Number(q.size) || 10))
     return ok({
-      items: list.slice((page - 1) * size, page * size).map(entryListItem),
+      records: list.slice((page - 1) * size, page * size).map(entryListItem),
+      current: page,
+      size,
       total: list.length,
-      page,
-      size
+      pages: Math.ceil(list.length / size)
     })
   },
 
@@ -635,10 +636,10 @@ const routes = {
     const page = Math.max(1, Number(q.page) || 1)
     const size = Math.min(50, Number(q.size) || 10)
     return ok({
-      items: list.slice((page - 1) * size, page * size).map(a => ({
+      records: list.slice((page - 1) * size, page * size).map(a => ({
         id: a.id, title: a.title, authorName: a.authorName || '未知', coverUrl: a.coverUrl, publishedAt: a.publishedAt
       })),
-      total: list.length, page, size
+      current: page, size, total: list.length, pages: Math.ceil(list.length / size)
     })
   },
 
@@ -699,7 +700,7 @@ const routes = {
 }
 
 // ---------- 响应包装（契约 §1.2/§1.3） ----------
-function ok(data, message = 'ok') { return { code: 0, message, data } }
+function ok(data, message = 'ok') { return { code: 200, message, data } }
 function fail(code, message) { return { code, message, data: null } }
 
 // ---------- 对外入口 ----------

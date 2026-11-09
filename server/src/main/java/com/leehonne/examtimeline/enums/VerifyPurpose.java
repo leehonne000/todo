@@ -1,9 +1,12 @@
 package com.leehonne.examtimeline.enums;
 
+import com.baomidou.mybatisplus.annotation.IEnum;
+
 /**
  * 验证码用途（t_verify_code.purpose）：1=注册激活，2=找回密码。防串用。
+ * 落库为数字 code（MyBatis-Plus IEnum 自动映射）。
  */
-public enum VerifyPurpose {
+public enum VerifyPurpose implements IEnum<Integer> {
     REGISTER(1),
     RESET_PASSWORD(2);
 
@@ -14,6 +17,11 @@ public enum VerifyPurpose {
     }
 
     public int getCode() {
+        return code;
+    }
+
+    @Override
+    public Integer getValue() {
         return code;
     }
 

@@ -1,51 +1,45 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 /**
- * 学习 session（t_study_session）—— Learn「选科目→横屏计时」的产物（§4.1/§4.2）。
- * 2026-10-24 修订：一次 session 只学一门科目，subject_id 随 session 落库（各科耗时精确统计）。
- * 生命周期：选科目开始计时建行 → 长按结束补 ended_at/duration → Done 写 entry。
+ * 学习会话（t_study_session）—— 一次 Learn 从计时到 Done 的完整记录（§5）。
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_study_session")
+@TableName("t_study_session")
+@Schema(description = "学习会话实体")
 public class StudySession {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
-    /** 归属用户（冗余，查询免 join） */
-    @Column(name = "user_id", nullable = false)
+    @Schema(description = "用户ID")
     private Long userId;
 
-    /** 本次学习科目（Learn 入口四选一，一次 session 一门） */
-    @Column(name = "subject_id", nullable = false)
+    @Schema(description = "科目ID")
     private Long subjectId;
 
-    /** 计时开始时刻（横屏进入计时那一刻） */
-    @Column(name = "started_at", nullable = false)
+    @Schema(description = "开始时间")
     private LocalDateTime startedAt;
 
-    /** 长按结束时刻；异常中断可空 */
-    @Column(name = "ended_at")
+    @Schema(description = "结束时间")
     private LocalDateTime endedAt;
 
-    /** 净学习秒数（排除暂停），一切时长统计的原始值 */
-    @Column(name = "duration_seconds", nullable = false)
+    @Schema(description = "有效学习秒数")
     private Integer durationSeconds = 0;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

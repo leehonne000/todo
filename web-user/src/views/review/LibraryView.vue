@@ -71,7 +71,7 @@ async function load() {
       page: page.value,
       size
     })
-    items.value = data.items
+    items.value = data.records
     total.value = data.total
   } catch (e) {
     toast(e.message)

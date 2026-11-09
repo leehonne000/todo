@@ -129,7 +129,7 @@ async function load() {
   loading.value = true
   try {
     const data = await adminListMilestones()
-    allItems.value = data.items
+    allItems.value = data
   } catch (e) {
     toast(e.message)
   } finally {

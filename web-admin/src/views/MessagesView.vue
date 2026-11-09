@@ -152,7 +152,7 @@ async function load() {
     const params = { page: 1, size: 50 }
     if (auth.isSuperAdmin && authorFilter.value !== 'all') params.authorId = authorFilter.value
     const data = await adminListMessages(params)
-    threads.value = data.items || []
+    threads.value = data.records || []
   } catch (e) {
     toast(e.message)
   } finally {

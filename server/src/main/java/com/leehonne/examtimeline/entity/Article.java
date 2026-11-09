@@ -1,8 +1,12 @@
 package com.leehonne.examtimeline.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.leehonne.examtimeline.enums.ArticleStatus;
-import com.leehonne.examtimeline.enums.ArticleStatusConverter;
-import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,54 +18,43 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_article")
+@TableName("t_article")
+@Schema(description = "文章实体")
 public class Article {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
     /** 作者 = 超级管理员（t_user.role=1，应用层校验） */
-    @Column(name = "author_id", nullable = false)
+    @Schema(description = "作者ID")
     private Long authorId;
 
     /** 文章标题（列表页展示） */
-    @Column(nullable = false, length = 120)
+    @Schema(description = "标题")
     private String title;
 
     /** 正文（v1 纯文本/Markdown 原文） */
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Schema(description = "正文")
     private String content;
 
     /** 封面图 MinIO 对象键（可选） */
-    @Column(name = "cover_object_key", length = 255)
+    @Schema(description = "封面图对象键")
     private String coverObjectKey;
 
     /** 状态：0=草稿（仅管理员） 1=已发布（全员可见） */
-    @Convert(converter = ArticleStatusConverter.class)
-    @Column(nullable = false)
+    @Schema(description = "状态：0=草稿 1=已发布")
     private ArticleStatus status = ArticleStatus.DRAFT;
 
     /** 发布时间（首次发布写入，列表倒序依据）；草稿为空 */
-    @Column(name = "published_at")
+    @Schema(description = "发布时间")
     private LocalDateTime publishedAt;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新时间")
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

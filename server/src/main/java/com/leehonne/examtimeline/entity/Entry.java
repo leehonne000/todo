@@ -1,10 +1,13 @@
 package com.leehonne.examtimeline.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.leehonne.examtimeline.enums.EntryType;
-import com.leehonne.examtimeline.enums.EntryTypeConverter;
 import com.leehonne.examtimeline.enums.ReviewStatus;
-import com.leehonne.examtimeline.enums.ReviewStatusConverter;
-import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,65 +21,53 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_entry")
+@TableName("t_entry")
+@Schema(description = "记录项实体")
 public class Entry {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
     /** 来自哪次 Learn：把"学了多久"和"学了什么"钉在一起（§8） */
-    @Column(name = "session_id", nullable = false)
+    @Schema(description = "所属学习会话ID")
     private Long sessionId;
 
     /** 归属用户（冗余，查询免 join） */
-    @Column(name = "user_id", nullable = false)
+    @Schema(description = "用户ID")
     private Long userId;
 
     /** 所属科目：继承自 session.subject_id（冗余免 join） */
-    @Column(name = "subject_id", nullable = false)
+    @Schema(description = "科目ID")
     private Long subjectId;
 
     /** 类型：1=note 2=错题（总结页「添加note/添加错题」入口按钮，§4.3） */
-    @Convert(converter = EntryTypeConverter.class)
-    @Column(nullable = false)
+    @Schema(description = "类型：1=note 2=错题")
     private EntryType type;
 
     /** 文字内容，可空（纯图片记录）；应用层校验"文字与图片至少一" */
-    @Column(columnDefinition = "TEXT")
+    @Schema(description = "文字内容")
     private String content;
 
     /** 艾宾浩斯已完成轮数 0~6 */
-    @Column(nullable = false)
+    @Schema(description = "已完成复习轮数 0~6")
     private Integer round = 0;
 
-    /** 下一轮到期日：入库=记录日+1天，此后按 2/4/7/15/22 顺延（§6.1） */
-    @Column(name = "next_due_at")
+    /** 下一轮到期日：入库=记录日+1天，此后按 2/4/7/15/22 顺延（§6.1）；出队后为空 */
+    @Schema(description = "下一轮到期日")
     private LocalDate nextDueAt;
 
     /** 复习状态：0=队列中 1=已出队（六轮走完） */
-    @Convert(converter = ReviewStatusConverter.class)
-    @Column(name = "review_status", nullable = false)
+    @Schema(description = "复习状态：0=队列中 1=已出队")
     private ReviewStatus reviewStatus = ReviewStatus.QUEUED;
 
     /** 入库时间（Done 时刻）= 复习排期基准日 */
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "入库时间")
     private LocalDateTime createdAt;
 
     /** 最后编辑时间（自由库可改内容） */
-    @Column(name = "updated_at", nullable = false)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "最后编辑时间")
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

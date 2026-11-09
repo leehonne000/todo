@@ -153,9 +153,9 @@ echo "$R" | grep -q '"code":2002' && log "PASS: 用户 U 不可删（2002）" ||
 R=$(curl -s -X DELETE "$API/admin/messages/$M1" -H "$AUTH_B")
 echo "$R" | grep -q '"code":2002' && log "PASS: 管理员 B 不可删 A 的留言（2002）" || log "FAIL: B 删 $R"
 R=$(curl -s -X DELETE "$API/admin/messages/$M1" -H "$AUTH_S")
-echo "$R" | grep -q '"code":0' && log "PASS: 超管可删任意留言" || log "FAIL: S 删 $R"
+echo "$R" | grep -q '"code":200' && log "PASS: 超管可删任意留言" || log "FAIL: S 删 $R"
 R=$(curl -s -X DELETE "$API/admin/messages/$M2" -H "$AUTH_A")
-echo "$R" | grep -q '"code":0' && log "PASS: A 可删自己文章的留言" || log "FAIL: A 删 $R"
+echo "$R" | grep -q '"code":200' && log "PASS: A 可删自己文章的留言" || log "FAIL: A 删 $R"
 
 log ""
 log "== 10. 清理测试数据 =="

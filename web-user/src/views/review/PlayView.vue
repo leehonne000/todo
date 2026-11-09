@@ -86,7 +86,7 @@ async function loadAll() {
   try {
     do {
       const data = await getEntries({ ...base, page })
-      all = all.concat(data.items)
+      all = all.concat(data.records)
       total = data.total
       page += 1
     } while (all.length < total && page <= 20)

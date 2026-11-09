@@ -250,7 +250,7 @@ def data(n):
     return load(n).get("data")
 
 # 注册只产普通用户 + 登录带 role（三级）
-if code("admin_reg_test_admin_a@example.com.json") == 0 and data("admin_reg_test_admin_a@example.com.json")["role"] == 0:
+if code("admin_reg_test_admin_a@example.com.json") == 200 and data("admin_reg_test_admin_a@example.com.json")["role"] == 0:
     ok("注册响应 role=0（注册永远只产普通用户）")
 else:
     fail(f"注册 {load('admin_reg_test_admin_a@example.com.json')}")
@@ -273,20 +273,20 @@ if code("admin_users_b.json") == 2002 and code("admin_ms_b.json") == 2002 and co
     ok("管理员 B 调用户任免/硬节点 → 2002（仅超管）")
 else:
     fail(f"admin-only {load('admin_users_b.json')} / {load('admin_ms_b.json')} / {load('admin_role_b.json')}")
-if code("admin_articles_a.json") == 0:
+if code("admin_articles_a.json") == 200:
     ok("管理员 A → 文章列表正常")
 else:
     fail(f"admin articles {load('admin_articles_a.json')}")
 
 # 文章归属权
-items = data("admin_list_b.json")["items"]
+items = data("admin_list_b.json")["records"]
 mine = next((it for it in items if it.get("title") == "[verify-admin]A 的文章"), None)
 if mine and mine.get("authorId") and mine.get("authorName"):
     ok(f"B 看得到 A 的文章且标作者（authorName={mine['authorName']}）")
 else:
     fail(f"list_b 标作者 {mine}")
 db = data("admin_detail_b.json")
-if code("admin_detail_b.json") == 0 and db and db.get("editable") is False and db.get("authorName"):
+if code("admin_detail_b.json") == 200 and db and db.get("editable") is False and db.get("authorName"):
     ok("B 看得到 A 文章详情，editable=false（不可操作）")
 else:
     fail(f"detail_b {db}")
@@ -295,18 +295,18 @@ if code("admin_b_update.json") == 2002 and code("admin_b_publish.json") == 2002 
 else:
     fail(f"b-ops {load('admin_b_update.json')} / {load('admin_b_publish.json')} / {load('admin_b_unpublish.json')} / {load('admin_b_delete.json')}")
 da = data("admin_detail_a.json")
-if code("admin_update.json") == 0 and da and da.get("editable") is True and da["title"] == "[verify-admin]第二稿":
+if code("admin_update.json") == 200 and da and da.get("editable") is True and da["title"] == "[verify-admin]第二稿":
     ok("A 编辑自己的文章成功（editable=true）")
 else:
     fail(f"update {load('admin_update.json')} / {da}")
-if code("admin_s_update.json") == 0 and code("admin_s_delete.json") == 0 and code("admin_detail_gone.json") == 3002:
+if code("admin_s_update.json") == 200 and code("admin_s_delete.json") == 200 and code("admin_detail_gone.json") == 3002:
     ok("超管 S 可改/删 A 的文章（全权），删后详情 3002")
 else:
     fail(f"s-ops {load('admin_s_update.json')} / {load('admin_s_delete.json')} / {load('admin_detail_gone.json')}")
 
 # C 端作者标识
 cs = data("admin_cside_pub.json")
-if code("admin_cside_pub.json") == 0 and cs and cs.get("authorName"):
+if code("admin_cside_pub.json") == 200 and cs and cs.get("authorName"):
     ok(f"C 端文章详情带作者（authorName={cs['authorName']}）")
 else:
     fail(f"cside {cs}")
@@ -320,8 +320,8 @@ if code("admin_create_bad.json") == 1001:
     ok("空标题 → 1001")
 else:
     fail(f"create_bad {load('admin_create_bad.json')}")
-titles0 = [it["title"] for it in data("admin_list_draft.json")["items"]]
-titles1 = [it["title"] for it in data("admin_list_pub.json")["items"]]
+titles0 = [it["title"] for it in data("admin_list_draft.json")["records"]]
+titles1 = [it["title"] for it in data("admin_list_pub.json")["records"]]
 if any("[verify-admin]首发验证" in t for t in titles0) and not any("[verify-admin]首发验证" in t for t in titles1):
     ok("status=0 列表含草稿、status=1 不含")
 else:
@@ -374,21 +374,24 @@ else:
     fail(f"cover_clear {cd3}")
 
 # 用户任免（仅超管）
-items = data("admin_users_kw.json")["items"]
+items = data("admin_users_kw.json")["records"]
 if any(it["email"] == "test_user_u@example.com" for it in items) and all("password" not in json.dumps(it) for it in items):
     ok("超管按邮箱关键词定位用户（不含密码字段）")
 else:
     fail(f"users_kw {items}")
-items2 = data("admin_users_id.json")["items"]
-if len(items2) == 1 and items2[0]["email"] == "test_user_u@example.com":
-    ok("超管按 id 精确定位用户")
+items2 = data("admin_users_id.json")["records"]
+# 规则：keyword=id 精确 或 邮箱/昵称模糊包含（共享库中可能命中其他用户，只断言规则与目标命中）
+kw2 = str(next(it["id"] for it in items2 if it["email"] == "test_user_u@example.com"))  # keyword 即该用户 id
+if any(it["email"] == "test_user_u@example.com" for it in items2) and all(
+        str(it["id"]) == kw2 or kw2 in (it.get("email") or "") or kw2 in (it.get("nickname") or "") for it in items2):
+    ok("超管按 id 定位用户（规则：id 精确 / 邮箱昵称模糊）")
 else:
     fail(f"users_id {items2}")
-if code("admin_promote.json") == 0 and code("admin_u_after_promote.json") == 0 and data("admin_login_u2.json").get("role") == 1:
+if code("admin_promote.json") == 200 and code("admin_u_after_promote.json") == 200 and data("admin_login_u2.json").get("role") == 1:
     ok("超管提拔：U role=1 后可调管理接口")
 else:
     fail(f"promote {load('admin_promote.json')} / {load('admin_u_after_promote.json')} / {data('admin_login_u2.json')}")
-if code("admin_demote.json") == 0 and code("admin_u_after_demote.json") == 2002 and data("admin_login_u3.json").get("role") == 0:
+if code("admin_demote.json") == 200 and code("admin_u_after_demote.json") == 2002 and data("admin_login_u3.json").get("role") == 0:
     ok("超管取消管理员：U role=0 后被拒 2002")
 else:
     fail(f"demote {load('admin_demote.json')} / {load('admin_u_after_demote.json')}")
@@ -407,7 +410,7 @@ else:
 
 # 硬节点
 m = data("admin_ms_create.json")
-if code("admin_ms_create.json") == 0 and m and m["examYear"] == 2099 and m["name"] == "初试":
+if code("admin_ms_create.json") == 200 and m and m["examYear"] == 2099 and m["name"] == "初试":
     ok(f"超管新建硬节点 id={m['id']}")
 else:
     fail(f"ms_create {load('admin_ms_create.json')}")
@@ -415,18 +418,18 @@ if code("admin_ms_bad_date.json") == 1001 and code("admin_ms_bad_year.json") == 
     ok("校验：结束日早于起始日 → 1001；届数越界 → 1001")
 else:
     fail(f"ms_bad {load('admin_ms_bad_date.json')} / {load('admin_ms_bad_year.json')}")
-l2 = data("admin_ms_list2.json")["items"]
+l2 = data("admin_ms_list2.json")
 if len(l2) == 1 and l2[0]["name"] == "初试（改）" and l2[0]["sortOrder"] == 6:
     ok("编辑硬节点生效（整体替换式）")
 else:
     fail(f"ms_update {l2}")
-all_items = data("admin_ms_all.json")["items"]
+all_items = data("admin_ms_all.json")
 years = {it["examYear"] for it in all_items}
 if 2099 in years and (2027 in years or 2028 in years):
     ok("全量列表跨届可见（含演示 2027/2028）")
 else:
     fail(f"ms_all years={years}")
-if code("admin_ms_delete.json") == 0 and data("admin_ms_list3.json")["items"] == []:
+if code("admin_ms_delete.json") == 200 and data("admin_ms_list3.json") == []:
     ok("删除硬节点生效")
 else:
     fail(f"ms_delete {load('admin_ms_delete.json')} / {load('admin_ms_list3.json')}")

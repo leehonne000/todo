@@ -85,7 +85,7 @@ async function runSearch() {
   }
   try {
     const data = await getEntries({ tagIds: selectedIds.value.join(','), page: 1, size: 50 })
-    results.value = data.items
+    results.value = data.records
     searched.value = true
   } catch (e) {
     toast(e.message)

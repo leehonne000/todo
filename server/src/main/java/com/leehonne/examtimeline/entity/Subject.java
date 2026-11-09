@@ -1,42 +1,39 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 /**
- * 科目组合（t_subject）—— 注册时确定（2~5 门）；Learn 入口选科目四选一（§4.1）；自由库/统计维度。
- * 删除科目不级联删记录（t_entry.subject_id 外键 RESTRICT，防误删历史）。
+ * 科目（t_subject）—— 注册时录入的科目组合；每个用户一套（§3.5）。
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_subject")
+@TableName("t_subject")
+@Schema(description = "科目实体")
 public class Subject {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
-    /** 归属用户（冗余，查询免 join） */
-    @Column(name = "user_id", nullable = false)
+    @Schema(description = "用户ID")
     private Long userId;
 
-    /** 科目名，用户自定义（政治/英语一/数学三/408…）；同用户不重名 */
-    @Column(nullable = false, length = 64)
+    @Schema(description = "科目名")
     private String name;
 
-    /** 展示顺序：选科目列表与统计表头顺序 */
-    @Column(name = "sort_order", nullable = false)
+    @Schema(description = "排序序号")
     private Integer sortOrder = 0;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

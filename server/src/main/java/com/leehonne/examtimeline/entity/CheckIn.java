@@ -1,6 +1,11 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,26 +17,22 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_check_in")
+@TableName("t_check_in")
+@Schema(description = "每日签到实体")
 public class CheckIn {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    @Schema(description = "主键ID")
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Schema(description = "用户ID")
     private Long userId;
 
     /** 打卡自然日；UNIQUE 天然防重复打卡 */
-    @Column(name = "check_in_date", nullable = false)
+    @Schema(description = "打卡日期")
     private LocalDate checkInDate;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

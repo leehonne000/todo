@@ -108,9 +108,9 @@ async function load() {
   loading.value = true
   try {
     const data = await adminListUsers({ keyword: appliedKeyword.value, page: page.value, size })
-    items.value = data.items
+    items.value = data.records
     total.value = data.total
-    if (!data.items.length && total.value > 0 && page.value > 1) {
+    if (!data.records.length && total.value > 0 && page.value > 1) {
       page.value = 1
       return load()
     }

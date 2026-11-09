@@ -57,10 +57,11 @@ AUTH_B="Authorization: Bearer $TOKEN_B"
 log ""
 log "== 2. 造测试文章（id 901~903，只测不污染演示数据）=="
 sql "DELETE FROM t_article WHERE id IN (901,902,903);" >/dev/null
+ADMIN_ID=$(sql "SELECT id FROM t_user WHERE role>=1 ORDER BY id LIMIT 1;" | tail -1)
 sql "INSERT INTO t_article (id,author_id,title,content,status,published_at,created_at,updated_at) VALUES
- (901,3,'[verify]旧文','内容901',1,'2026-10-26 08:00:00','2026-10-26 08:00:00','2026-10-26 08:00:00'),
- (902,3,'[verify]新文','内容902',1,'2026-10-27 07:00:00','2026-10-27 07:00:00','2026-10-27 07:00:00'),
- (903,3,'[verify]草稿','内容903',0,NULL,'2026-10-27 07:30:00','2026-10-27 07:30:00');" >/dev/null
+ (901,$ADMIN_ID,'[verify]旧文','内容901',1,'2026-10-26 08:00:00','2026-10-26 08:00:00','2026-10-26 08:00:00'),
+ (902,$ADMIN_ID,'[verify]新文','内容902',1,'2026-10-27 07:00:00','2026-10-27 07:00:00','2026-10-27 07:00:00'),
+ (903,$ADMIN_ID,'[verify]草稿','内容903',0,NULL,'2026-10-27 07:30:00','2026-10-27 07:30:00');" >/dev/null
 log "测试文章 3 篇（2 发布 + 1 草稿）"
 
 log ""
@@ -96,7 +97,7 @@ def data(n):
 
 # overview A（2028 届）
 a = data("info_ov_a.json")
-if code("info_ov_a.json") == 0 and a["examYear"] == 2028:
+if code("info_ov_a.json") == 200 and a["examYear"] == 2028:
     ok("A overview examYear=2028")
 else:
     fail(f"A overview {load('info_ov_a.json')}")
@@ -121,41 +122,42 @@ else:
 # overview B（2027 届 → 届数过滤）
 b = data("info_ov_b.json")
 chu_b = next((m for m in b["milestones"] if m["name"] == "初试"), None)
-if code("info_ov_b.json") == 0 and b["examYear"] == 2027 and chu_b and chu_b["dateFrom"] == "2026-12-19":
+if code("info_ov_b.json") == 200 and b["examYear"] == 2027 and chu_b and chu_b["dateFrom"] == "2026-12-19":
     ok("B overview 届数过滤（2027 届初试 2026-12-19）")
 else:
     fail(f"B overview {b}")
 
 # 列表：只含已发布 + 倒序
 arts = data("info_articles.json")
-titles = [it["title"] for it in arts["items"]]
-if code("info_articles.json") == 0 and arts["total"] == 4 and len(arts["items"]) == 4:
-    ok("列表 total=4（演示 2 + 测试 2 发布；2 草稿被排除）")
+titles = [it["title"] for it in arts["records"]]
+if code("info_articles.json") == 200 and "[verify]新文" in titles and "[verify]旧文" in titles and arts["total"] == len(titles):
+    ok(f"列表含 2 篇测试已发布（total={arts['total']}，演示文章随库状态）")
 else:
     fail(f"列表 total={arts and arts.get('total')} titles={titles}")
-if titles[0] == "[verify]新文" and titles[-1] == "2028 考研全年规划：四个阶段走稳上岸路":
-    ok("发布倒序（10-27 最新在前，10-20 最旧在后）")
+if titles.index("[verify]新文") < titles.index("[verify]旧文"):
+    ok("发布倒序（新文 10-27 在旧文 10-26 之前）")
 else:
     fail(f"顺序 {titles}")
 if any("草稿" in t for t in titles):
     fail("草稿泄漏进列表")
 else:
     ok("草稿不在列表")
-if all(it["coverUrl"] is None for it in arts["items"]):
-    ok("无封面 coverUrl=null")
+test_items = [it for it in arts["records"] if it["title"].startswith("[verify]")]
+if test_items and all(it["coverUrl"] is None for it in test_items):
+    ok("测试文章无封面 coverUrl=null")
 else:
-    fail("coverUrl 不该有值")
+    fail(f"coverUrl 不该有值 {test_items}")
 
 # 分页
 p2 = data("info_articles_p2.json")
-if p2["page"] == 2 and p2["size"] == 2 and len(p2["items"]) == 2 and p2["total"] == 4:
-    ok("分页 page=2&size=2 正常")
+if p2["current"] == 2 and p2["size"] == 2 and len(p2["records"]) == 2 and p2["total"] == arts["total"]:
+    ok("分页 page=2&size=2 正常（PageVO current/size/total）")
 else:
     fail(f"分页 {p2}")
 
 # 详情
 d = data("info_detail_ok.json")
-if code("info_detail_ok.json") == 0 and d["title"] == "[verify]新文" and d["content"] == "内容902" and d["publishedAt"].startswith("2026-10-27"):
+if code("info_detail_ok.json") == 200 and d["title"] == "[verify]新文" and d["content"] == "内容902" and d["publishedAt"].startswith("2026-10-27"):
     ok("详情：已发布可见（标题/正文/发布时间）")
 else:
     fail(f"详情 {load('info_detail_ok.json')}")

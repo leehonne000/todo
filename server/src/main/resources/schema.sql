@@ -24,6 +24,8 @@ CREATE TABLE t_user (
   role          TINYINT         NOT NULL DEFAULT 0 COMMENT '角色：0=普通用户 1=管理员 2=超级管理员（2026-10-27 三级制，超管=部署者指定）',
   phone         VARCHAR(20)              DEFAULT NULL COMMENT '手机号（预留，v1 不做短信验证）',
   exam_year     SMALLINT        NOT NULL COMMENT '考研届数（如 2027）：倒计时/时间线取数据的依据',
+  nickname      VARCHAR(20)              DEFAULT NULL COMMENT '昵称（1~20 字符）；注册自动赋默认 = 邮箱 @ 前缀（§3.5，2026-10-25 增补）',
+  avatar_object_key VARCHAR(255)         DEFAULT NULL COMMENT '头像对象键；空 = 系统默认头像 /avatar-default.png（§3.5，2026-10-25 增补）',
   created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
   updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '资料变更时间',
   PRIMARY KEY (id),

@@ -208,8 +208,8 @@ function paginate(list, q) {
   const page = Math.max(1, Number(q.page) || 1)
   const size = Math.min(50, Math.max(1, Number(q.size) || 10))
   return {
-    items: list.slice((page - 1) * size, page * size),
-    total: list.length, page, size
+    records: list.slice((page - 1) * size, page * size),
+    current: page, size, total: list.length, pages: Math.ceil(list.length / size)
   }
 }
 function validateArticle(body) {
@@ -456,7 +456,7 @@ const routes = {
       list = list.filter(m => m.examYear === Number(ctx.query.examYear))
     }
     list.sort((a, b) => a.examYear - b.examYear || a.sortOrder - b.sortOrder)
-    return ok({ items: list.map(m => ({ ...m })) })
+    return ok(list.map(m => ({ ...m })))
   },
 
   // ---- §11.11 新建硬节点（仅超管）----
@@ -643,7 +643,7 @@ const routes = {
 }
 
 // ---------- 响应包装（契约 §1.2/§1.3） ----------
-function ok(data, message = 'ok') { return { code: 0, message, data } }
+function ok(data, message = 'ok') { return { code: 200, message, data } }
 function fail(code, message) { return { code, message, data: null } }
 
 // ---------- 对外入口 ----------

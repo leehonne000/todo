@@ -203,28 +203,28 @@ def data(n):
     return load(n).get("data")
 
 # 空态
-if code("lib_empty.json") == 0 and data("lib_empty.json")["total"] == 0:
+if code("lib_empty.json") == 200 and data("lib_empty.json")["total"] == 0:
     ok("空库列表 total=0")
 else:
     fail(f"空库列表 {load('lib_empty.json')}")
-if code("lib_tags_empty.json") == 0 and data("lib_tags_empty.json") == []:
+if code("lib_tags_empty.json") == 200 and data("lib_tags_empty.json") == []:
     ok("空库标签词表 []")
 else:
     fail(f"空库标签 {load('lib_tags_empty.json')}")
 
 # 列表
 d = data("lib_list_all.json")
-if code("lib_list_all.json") == 0 and d["total"] == 3 and len(d["items"]) == 3:
+if code("lib_list_all.json") == 200 and d["total"] == 3 and len(d["records"]) == 3:
     ok("列表 total=3（createdAt 倒序 3 条）")
 else:
     fail(f"列表 total={d and d.get('total')} items={d and len(d.get('items', []))}")
-ids = [it["id"] for it in d["items"]]
+ids = [it["id"] for it in d["records"]]
 if ids[0] == int(e3) and ids[-1] == int(e1):
     ok("列表按 createdAt 倒序（e3 最新在前，e1 最旧在后）")
 else:
     fail(f"列表顺序 {ids}")
-e1i = next(it for it in d["items"] if it["id"] == int(e1))
-e3i = next(it for it in d["items"] if it["id"] == int(e3))
+e1i = next(it for it in d["records"] if it["id"] == int(e1))
+e3i = next(it for it in d["records"] if it["id"] == int(e3))
 if e1i["imageCount"] == 1 and e1i["tags"] == ["重点", "薄弱"] and e1i["subjectName"] == "政治" and e1i["type"] == 1:
     ok("e1 列表项字段（imageCount/tags/subjectName/type）")
 else:
@@ -241,7 +241,7 @@ if total("lib_list_subj1.json") == 2 and total("lib_list_subj2.json") == 1:
     ok("科目筛选（政治 2 / 英语一 1）")
 else:
     fail(f"科目筛选 {total('lib_list_subj1.json')}/{total('lib_list_subj2.json')}")
-if total("lib_list_type2.json") == 1 and data("lib_list_type2.json")["items"][0]["type"] == 2:
+if total("lib_list_type2.json") == 1 and data("lib_list_type2.json")["records"][0]["type"] == 2:
     ok("类型筛选 type=2 命中 1 条错题")
 else:
     fail(f"type 筛选 {load('lib_list_type2.json')}")
@@ -254,7 +254,7 @@ if total("lib_list_tag2.json") == 2:
 else:
     fail(f"多标签 {total('lib_list_tag2.json')}")
 p2 = data("lib_list_page2.json")
-if p2["page"] == 2 and len(p2["items"]) == 1 and p2["total"] == 3 and p2["size"] == 2:
+if p2["current"] == 2 and len(p2["records"]) == 1 and p2["total"] == 3 and p2["size"] == 2:
     ok("分页 page=2&size=2 → 1 条，total=3")
 else:
     fail(f"分页 {p2}")
@@ -275,7 +275,7 @@ else:
     fail(f"other {load('lib_detail_other.json')}")
 
 # 修改
-if code("lib_update1.json") == 0:
+if code("lib_update1.json") == 200:
     ok("修改整体替换 → 0")
 else:
     fail(f"update1 {load('lib_update1.json')}")
@@ -314,7 +314,7 @@ else:
     fail(f"otherentry {load('lib_update_otherentry.json')}")
 
 # 图片对象清理
-if code("lib_update3.json") == 0 and data("lib_detail3_after.json")["images"] == []:
+if code("lib_update3.json") == 200 and data("lib_detail3_after.json")["images"] == []:
     ok("e3 图片移除成功（详情图空）")
 else:
     fail(f"update3 {load('lib_update3.json')} / {data('lib_detail3_after.json')}")
@@ -324,7 +324,7 @@ else:
     fail("被移除图片对象仍可访问")
 
 # 删除记录
-if code("lib_delete.json") == 0 and data("lib_list_after_delete.json")["total"] == 2 and code("lib_detail2_after.json") == 3002:
+if code("lib_delete.json") == 200 and data("lib_list_after_delete.json")["total"] == 2 and code("lib_detail2_after.json") == 3002:
     ok("删除记录：列表剩 2、详情 3002")
 else:
     fail(f"delete {load('lib_delete.json')}/{data('lib_list_after_delete.json')}/{load('lib_detail2_after.json')}")

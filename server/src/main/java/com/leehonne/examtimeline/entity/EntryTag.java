@@ -1,61 +1,32 @@
 package com.leehonne.examtimeline.entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
- * 记录-标签关联（t_entry_tag，多对多中间表，复合主键）。
+ * 记录-标签关联（t_entry_tag，多对多中间表，复合主键 entry_id + tag_id）。
+ * 复合主键表不声明 @TableId，统一用 Wrapper 条件操作（selectList / delete / insert）。
  */
 @Getter
 @Setter
-@Entity
-@Table(name = "t_entry_tag")
-@IdClass(EntryTag.EntryTagId.class)
+@TableName("t_entry_tag")
+@Schema(description = "记录-标签关联实体")
 public class EntryTag {
 
-    @Id
-    @Column(name = "entry_id", nullable = false)
+    @Schema(description = "记录项ID（复合主键）")
     private Long entryId;
 
-    @Id
-    @Column(name = "tag_id", nullable = false)
+    @Schema(description = "标签ID（复合主键）")
     private Long tagId;
 
     /** 关联时间 */
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "关联时间")
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    /** 复合主键载体 */
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class EntryTagId implements Serializable {
-        private Long entryId;
-        private Long tagId;
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof EntryTagId other)) return false;
-            return Objects.equals(entryId, other.entryId) && Objects.equals(tagId, other.tagId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(entryId, tagId);
-        }
-    }
 }
